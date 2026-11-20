@@ -11,6 +11,9 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "./",
+  // Todo el código en caracteres simples (los especiales como \uXXXX): claude.ai rechaza
+  // archivos con algunos caracteres sueltos que trae la librería de Excel.
+  esbuild: { charset: "ascii" },
   build: {
     outDir: "dist",
     emptyOutDir: true,
