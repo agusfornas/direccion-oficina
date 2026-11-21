@@ -1,13 +1,10 @@
-// Lectura y guardado de Lavadero en la base compartida.
+// Lectura y guardado de Lavadero (en el servidor, ver servidor/).
 //
-// Colecciones (mismos nombres que la v1):
+// Colecciones (mismos nombres y forma que la v1):
 //   config/v1, config/v2…    versiones de la configuración (nunca se pisan: cada cambio es una versión nueva)
 //   partidas/p1, p2…         partidas (al eliminar se marcan con eliminada: true, no se borran)
-//   contadores/partidas      último número usado (v2)
-//   candados/…               candados de guardado (v2, ver comun/guardar.ts)
-import { db, ErrorApp, leerColeccion, quienSoy } from "../comun/claude";
 import { ahora } from "../comun/fechas";
-import { conCandado, crearConNumero, guardarSinPisar } from "../comun/guardar";
+import { crearNumerado, crearSiNoExiste, ErrorApp, guardarSinPisar, leerColeccion, leerDocumento, quienSoy } from "../comun/servidor";
 import { calcularPartida, FORMULAS } from "./calculo";
 import { CONFIG_INICIAL } from "./config-inicial";
 import type { ConfigLavadero, EntradaPartida, Partida, VersionConfig } from "./tipos";
@@ -32,26 +29,32 @@ export async function configActual(): Promise<VersionConfig> {
   const vs = await versionesGuardadas();
   if (vs.length) return vs[0];
   const v1: VersionConfig = { version: 1, creado: ahora(), nota: "Configuración inicial", config: copia(CONFIG_INICIAL), quien: await quienSoy() };
-  await (await db()).doc("config/v1").set(v1 as unknown as Record<string, unknown>);
-  return v1;
+  try {
+    return await crearSiNoExiste("config", "v1", v1);
+  } catch {
+    // Otra persona la creó en el mismo instante: se usa esa.
+    return (await versionesGuardadas())[0] ?? v1;
+  }
 }
 
 /** Guarda una configuración nueva como versión siguiente. Si no cambió nada, no guarda. */
 export async function guardarConfig(form: ConfigLavadero, nota: string, versionAlAbrir?: number): Promise<VersionConfig> {
-  return conCandado("config", async () => {
-    const actual = await configActual();
-    if (versionAlAbrir !== undefined && actual.version !== versionAlAbrir)
-      throw new ErrorApp(
-        `Otra persona guardó la versión ${actual.version} de la configuración mientras editabas. Tocá "Descartar cambios" para ver la nueva y repetí tu cambio.`,
-      );
-    const nueva = limpiarConfig(form, actual.config);
-    const errores = validarConfig(nueva);
-    if (Object.keys(errores).length) throw new ErrorApp("Configuración inválida", errores);
-    if (JSON.stringify(nueva) === JSON.stringify(actual.config)) return actual;
-    const v: VersionConfig = { version: actual.version + 1, creado: ahora(), nota: nota.slice(0, 300), config: nueva, quien: await quienSoy() };
-    await (await db()).doc(`config/v${v.version}`).set(v as unknown as Record<string, unknown>);
-    return v;
-  });
+  const actual = await configActual();
+  const otraPersona = (n: number) =>
+    new ErrorApp(`Otra persona guardó la versión ${n} de la configuración mientras editabas. Tocá "Descartar cambios" para ver la nueva y repetí tu cambio.`);
+  if (versionAlAbrir !== undefined && actual.version !== versionAlAbrir) throw otraPersona(actual.version);
+  const nueva = limpiarConfig(form, actual.config);
+  const errores = validarConfig(nueva);
+  if (Object.keys(errores).length) throw new ErrorApp("Configuración inválida", errores);
+  if (JSON.stringify(nueva) === JSON.stringify(actual.config)) return actual;
+  const v: VersionConfig = { version: actual.version + 1, creado: ahora(), nota: nota.slice(0, 300), config: nueva, quien: await quienSoy() };
+  try {
+    // Si dos personas guardan a la vez, la base acepta solo la primera versión con ese número.
+    return await crearSiNoExiste("config", `v${v.version}`, v);
+  } catch (e) {
+    if (e instanceof ErrorApp && e.estado === 409) throw otraPersona(v.version);
+    throw e;
+  }
 }
 
 /** Todas las versiones, con cuántas partidas se calcularon con cada una. */
@@ -61,7 +64,7 @@ export async function versiones() {
 }
 
 export async function version(n: number): Promise<VersionConfig> {
-  const v = (await (await db()).doc(`config/v${n}`).get()).data() as VersionConfig | undefined;
+  const v = await leerDocumento<VersionConfig>("config", `v${n}`);
   if (!v) throw new ErrorApp("Esa versión de la configuración no existe.");
   return v;
 }
@@ -104,7 +107,7 @@ export async function productores() {
 export const partidas = async (f: Filtros = {}) => filtrar(await partidasActivas(), f);
 
 export async function partida(id: number): Promise<Partida> {
-  const p = (await (await db()).doc(`partidas/p${id}`).get()).data() as Partida | undefined;
+  const p = await leerDocumento<Partida>("partidas", `p${id}`);
   if (!p || p.eliminada) throw new ErrorApp("La partida no existe");
   return { ...p, auditoria: p.auditoria ?? [] };
 }
@@ -119,11 +122,11 @@ export async function crearPartida(entrada: EntradaPartida): Promise<Partida> {
   revisar(e);
   const [cfg, existentes, quien] = await Promise.all([configActual(), partidasActivas(), quienSoy()]);
   e.productor = nombreExistente(e.productor, existentes);
-  return crearConNumero<Partida & Record<string, unknown>>("partidas", "p", (id) => {
-    const cuando = ahora();
-    return {
-      id,
-      numero: String(id).padStart(4, "0"),
+  const cuando = ahora();
+  // El servidor pone el número (id y "0012") en el momento de guardar.
+  return crearNumerado<Partida>("partidas", "p", true, {
+      id: 0,
+      numero: "",
       productorId: numeroProductor(e.productor, existentes),
       productor: e.productor,
       fecha: e.fecha,
@@ -137,8 +140,6 @@ export async function crearPartida(entrada: EntradaPartida): Promise<Partida> {
       actualizado: cuando,
       eliminada: false,
       auditoria: [{ accion: "crear", detalle: { configVersion: cfg.version }, fecha: cuando, quien }],
-      rev: 0,
-    };
   });
 }
 

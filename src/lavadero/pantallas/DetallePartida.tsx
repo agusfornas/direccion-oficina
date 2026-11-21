@@ -1,7 +1,7 @@
 // Pantalla de una partida guardada (#historial-12).
 import { useEffect, useState } from "react";
 import { Cambios } from "../../comun/Cambios";
-import { descargar } from "../../comun/claude";
+import { descargar } from "../../comun/servidor";
 import { fechaCorta } from "../../comun/fechas";
 import { numero, numeroFijo, plata, porcentaje } from "../../comun/numeros";
 import { avisar, BotonEliminar, Cargando, ir, Kpi, mensajeDe } from "../../comun/ui";

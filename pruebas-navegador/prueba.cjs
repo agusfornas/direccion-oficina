@@ -1,11 +1,13 @@
-// Prueba de punta a punta en un navegador real, contra el simulador (npm run dev).
-// Uso: en una terminal `npx vite --port 5199`, en otra `node pruebas-navegador/prueba.cjs`.
+// Prueba de punta a punta en un navegador real, contra la app corriendo en la computadora.
+// Uso: borrar la base de prueba (`rm -rf .wrangler/estado`), en una terminal `npm run local`,
+// y en otra `node pruebas-navegador/prueba.cjs`.
 // Necesita Playwright instalado (npm i -D playwright && npx playwright install chromium).
 // Deja capturas de pantalla en pruebas-navegador/capturas/ (no se suben al repo).
 const { chromium } = require('playwright');
 const OUT = require('path').join(__dirname, 'capturas');
 require('fs').mkdirSync(OUT, { recursive: true });
-const URL = 'http://localhost:5199/';
+const URL = 'http://localhost:8788/';
+const api = (ruta, metodo = 'GET', cuerpo) => fetch(URL + 'api/' + ruta, { method: metodo, headers: { 'content-type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined }).then((r) => r.json());
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -42,7 +44,7 @@ const URL = 'http://localhost:5199/';
   ok((await texto()).includes('Partida 0001'), 'muestra número 0001');
   await page.click('summary:has-text("Historial de cambios")');
   await page.waitForTimeout(200);
-  ok((await texto()).includes('Persona de prueba'), 'historial de cambios muestra quién');
+  ok((await texto()).includes('local@prueba'), 'historial de cambios muestra quién');
   await page.screenshot({ path: OUT + '/03-detalle.png', fullPage: true });
 
   // --- Corregir: 1.500 se entiende como mil quinientos ---
@@ -59,30 +61,28 @@ const URL = 'http://localhost:5199/';
   // --- Conflicto: otra persona cambia la partida mientras está abierta ---
   await page.click('text=Corregir datos');
   await page.waitForSelector('text=Corregir partida');
-  await page.evaluate(async () => {
-    const d = JSON.parse(localStorage.getItem('simulador.db'));
-    d['partidas/p1'].rev = (d['partidas/p1'].rev ?? 0) + 1; // "otra persona" guardó
-    localStorage.setItem('simulador.db', JSON.stringify(d));
-  });
+  { // "otra persona" guarda la partida mientras el formulario está abierto
+    const d = await api('c/partidas/p1');
+    await api('c/partidas/p1', 'PUT', { documento: d, revEsperada: d.rev });
+  }
   await page.getByLabel('Cantidad de tacos').fill('130');
   await page.click('button:has-text("Guardar cambios")');
   await page.waitForSelector('.toast:has-text("Otra persona cambió")', { timeout: 15000 });
-  const tacosGuardados = await page.evaluate(() => JSON.parse(localStorage.getItem('simulador.db'))['partidas/p1'].input.tacos);
+  const tacosGuardados = (await api('c/partidas/p1')).input.tacos;
   ok(tacosGuardados === '120', 'detecta cambio de otra persona y no pisa (quedó ' + tacosGuardados + ')');
 
   // --- Dos personas creando a la vez: números distintos ---
-  const nums = await page.evaluate(async () => {
-    const datos = await import('/src/lavadero/datos.ts');
-    const base = { productor: 'Simultáneo', fecha: '2026-11-20', pesoModo: 'PROMEDIO', tacos: '10', pesoPromedio: '32', grupos: [], precioSolicitado: '200', precioPagado: '', bolsas: { CUBITOS: '5', VEINTEX1: '5', EXTRA: '0', MONOS: '0', MONITOS: '2', INDUSTRIAL: '0' }, notas: '' };
-    const r = await Promise.all([1, 2, 3, 4, 5].map(() => datos.crearPartida(base)));
-    return r.map((p) => p.id);
-  });
+  const base = (await api('c/partidas/p1'));
+  const r5 = await Promise.all([1, 2, 3, 4, 5].map(() => api('c/partidas/nuevo', 'POST', { prefijo: 'p', numeroComoTexto: true, documento: { ...base, productor: 'Simultáneo', rev: undefined, auditoria: [] } })));
+  const nums = r5.map((p) => p.id);
   ok(new Set(nums).size === 5, '5 partidas creadas a la vez → 5 números distintos: ' + nums.join(','));
 
   // --- Historial y export ---
   await page.goto(URL + '#historial');
   await page.waitForSelector('text=6 partidas');
   ok(true, 'historial lista 6 partidas');
+  const [descarga] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Exportar a Excel")')]);
+  ok(descarga.suggestedFilename() === 'partidas.xlsx', 'Excel se descarga: ' + descarga.suggestedFilename());
   await page.keyboard.press('Tab');
   const fila = page.locator('tr.click').first();
   await fila.focus();

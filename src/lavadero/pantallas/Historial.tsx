@@ -1,6 +1,6 @@
 // Pantalla "Historial": lista de partidas con filtros y exportación a Excel.
 import { useEffect, useState } from "react";
-import { descargar } from "../../comun/claude";
+import { descargar } from "../../comun/servidor";
 import { fechaCorta, MESES } from "../../comun/fechas";
 import { numero } from "../../comun/numeros";
 import { avisar, Campo, Cargando, FilaLink, mensajeDe } from "../../comun/ui";

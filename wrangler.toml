@@ -1,0 +1,16 @@
+# Configuración de Cloudflare Pages. Ver CLOUDFLARE.md para cómo completarla.
+name = "direccion-oficina"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-04-01"
+
+# La base de datos. El database_id lo da `npx wrangler d1 create direccion-oficina` (paso 3 de CLOUDFLARE.md).
+[[d1_databases]]
+binding = "DB"
+database_name = "direccion-oficina"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# Cloudflare Access (paso 5 de CLOUDFLARE.md). No son secretos: identifican la app de login.
+# Mientras estén vacíos, el servidor no deja entrar a nadie (es lo seguro).
+[vars]
+ACCESS_EQUIPO = ""
+ACCESS_AUD = ""

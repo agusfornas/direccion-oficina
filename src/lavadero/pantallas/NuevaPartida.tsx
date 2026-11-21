@@ -2,7 +2,7 @@
 // El resultado se calcula en vivo mientras se carga. El borrador se guarda en este
 // navegador, así no se pierde si se cierra la pestaña.
 import { useEffect, useMemo, useState } from "react";
-import { ErrorApp } from "../../comun/claude";
+import { ErrorApp } from "../../comun/servidor";
 import { hoy } from "../../comun/fechas";
 import { numero } from "../../comun/numeros";
 import { avisar, Campo, Cargando, ir, mensajeDe, Numero } from "../../comun/ui";

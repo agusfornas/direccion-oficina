@@ -1,7 +1,7 @@
 // Pantalla "Configuración" de Transporte. Cada viaje guarda una copia de la
 // configuración con la que se cargó: cambiar algo acá no toca los viajes viejos.
 import { useEffect, useMemo, useState } from "react";
-import { ErrorApp } from "../../comun/claude";
+import { ErrorApp } from "../../comun/servidor";
 import { normalizarNumero, numeroFijo } from "../../comun/numeros";
 import { avisar, Campo, Cargando, mensajeDe, Numero } from "../../comun/ui";
 import { consumoCada100 } from "../calculo";
