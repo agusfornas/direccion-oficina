@@ -4,8 +4,8 @@ La hace **el dueño de la cuenta de Cloudflare**, desde el navegador. Son unos 2
 Todo lo de acá entra en los planes gratis de Cloudflare (Access es gratis hasta 50 personas;
 puede que te pida una tarjeta igual, sin cobrar).
 
-Recomendación: que la cuenta sea **de la empresa** (por ejemplo, la de Agustín) y sumar al autor
-como miembro (Manage Account → Members), así los dos pueden administrarla.
+La cuenta es **de Mauricio**, el dueño de la empresa: así la app, los datos y el login quedan
+a su nombre. Puede sumar a Agustín como miembro (Manage Account → Members) para que lo ayude.
 
 Los nombres de los menús de Cloudflare cambian seguido: si alguno no coincide, buscá la palabra
 clave (D1, Pages, Zero Trust, Access) en el buscador del panel.

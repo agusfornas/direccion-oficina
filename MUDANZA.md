@@ -3,9 +3,8 @@
 Se hace **una sola vez**, después de `CLOUDFLARE.md` y antes de que el equipo empiece a cargar.
 Los datos se guardan con **la misma forma** que en la app vieja: es copiarlos tal cual.
 
-Intervienen dos personas (pueden ser la misma):
-- **El dueño de la app vieja** (el autor): es el único que puede leer esos datos.
-- **Quien tiene acceso a Cloudflare**: carga los datos en la base nueva.
+La hace **Mauricio**: es el dueño de la app vieja (el único que puede leer esos datos) y de la
+cuenta de Cloudflare (donde se cargan). Si otra persona lo ayuda, tiene que ser miembro de esa cuenta.
 
 ## Antes de empezar
 Avisá al equipo que **no cargue nada en ninguna de las dos apps** mientras dura (unos minutos).
