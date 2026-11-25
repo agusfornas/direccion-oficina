@@ -7,7 +7,7 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [x] Entrada con tarjeta + PIN de 4 números (25/11/2026, pedido del dueño; reemplazó al login por email de Access).
 - [x] Crear la cuenta, la base y la página (`CLOUDFLARE.md`). Hecho el 25/11/2026 en la cuenta de Mauricio.
 - [ ] Mauricio elige su PIN; después se saca el login por email de Cloudflare Access (Zero Trust → Access → Applications).
-- [ ] Mudanza de datos desde la app vieja (`MUDANZA.md`).
+- [x] ~~Mudanza de datos desde la app vieja~~: no hace falta, el artefacto era solo un prototipo sin datos reales (25/11/2026).
 - [ ] Agregar al equipo en la pantalla Personas y pasarles el enlace.
 - [ ] Un día de uso real con el equipo: cargar, corregir, eliminar, exportar Excel.
 - [ ] Borrar la copia de prueba de claude.ai (https://claude.ai/artifact/AMw7Dvu93AnLfj4TQU3ezr) y sacarle el acceso al equipo a la app vieja.
@@ -26,8 +26,7 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [ ] **Hacer privado el repositorio de GitHub** (Settings → Change visibility → Private). Los valores de
   arranque de Lavadero (`src/lavadero/config-inicial.ts`) tienen precios reales (Moños agregado el
   25/11/2026 a pedido). Mientras el repo sea público, cualquiera los puede leer.
-- [ ] Cargar Moños (venta 6510, mano de obra 441,61) en Lavadero → Configuración de la app: los valores
-  de arranque no cambian una configuración ya guardada.
+- [x] Moños cargado a mano en Lavadero → Configuración de la app (25/11/2026).
 
 ## Para decidir (no se tocó para no cambiar resultados)
 - [ ] **Precio pedido obligatorio.** El formulario exige "Precio solicitado o de referencia", pero el motor
