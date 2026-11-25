@@ -222,3 +222,68 @@ describe("Lavadero: números calculados con tres decimales", () => {
     expect(calcularPartida(e, CONFIG_INICIAL).kgTerminados).toBe("24.15");
   });
 });
+
+// Calculadora, 25/11/2026: "Precios de venta de hoy" y "Precio de venta" (traídas del artefacto
+// de claude.ai del 24/11). Antes la página no tenía estas cuentas; ahora tienen que dar lo mismo
+// que el artefacto, y las cuentas que ya estaban no cambian.
+// @ts-expect-error: archivo JS copiado del artefacto, sin tipos
+import { NH } from "../pruebas/artefacto/precio-venta.js";
+import { calcularPrecioVenta, conPreciosDeHoy } from "./calculadora";
+
+describe("Lavadero: calculadora, precio de venta y precios de hoy", () => {
+  it("precio de venta igual al artefacto con 2000 configuraciones al azar", () => {
+    for (let i = 0; i < 2000; i++) {
+      const a = azar(i + 3100);
+      const cfg = limpiarConfig(a.r() < 0.5 ? configValida(a) : configAlAzar(a), CONFIG_INICIAL);
+      if (Object.keys(validarConfig(cfg)).length) continue;
+      const kg = a.elegir(["32", "", "0", String(a.entero(20, 40)), "31.5"]);
+      const paga = a.elegir(["", "0", "-5", "abc", String(a.entero(50, 900)), `${a.entero(50, 900)},5`]);
+      expect(JSON.parse(JSON.stringify(calcularPrecioVenta(cfg, kg, paga))), `precio de venta #${i}`).toEqual(JSON.parse(JSON.stringify(NH(cfg, kg, paga))));
+    }
+  });
+
+  it("caso a mano: pagando justo el Precio Límite, el mínimo es el precio de hoy", () => {
+    const taco = calcularTacoOptimo(CONFIG_INICIAL, "32", "")!;
+    const pv = calcularPrecioVenta(CONFIG_INICIAL, "32", taco.maximoKg!.toString())!;
+    expect(pv.factor.toDecimalPlaces(12).toString()).toBe("1");
+    for (const f of pv.filas) expect(f.diferencia.toString(), f.nombre).toBe("0");
+  });
+
+  it("caso a mano: cuenta paso a paso con la configuración inicial y $300 el kilo", () => {
+    const c = CONFIG_INICIAL;
+    const taco = calcularTacoOptimo(c, "32", "")!;
+    const pv = calcularPrecioVenta(c, "32", "300")!;
+    const x = taco.detalle;
+    const costo = x.manoObra.plus(x.bolsasCosto).plus(x.entacada).plus(x.flete).plus(x.gastosGenerales).plus(300 * 32);
+    expect(pv.costoTaco.toString()).toBe(costo.toString());
+    const g = Number(c.gananciaPct ?? "0") / 100;
+    expect(pv.ventaMinima.toString()).toBe(costo.div(1 - g).toString());
+    expect(pv.factor.toString()).toBe(costo.div(1 - g).div(x.ventas).toString());
+    const cubitos = pv.filas.find((f) => f.id === "CUBITOS")!;
+    expect(cubitos.minimo.toString()).toBe(cubitos.hoy.times(pv.factor).ceil().toString());
+    expect(cubitos.diferencia.toString()).toBe(cubitos.hoy.minus(cubitos.minimo).toString());
+  });
+
+  it("precio de venta: sin precio pagado, negativo o con faltantes, no hay cuenta", () => {
+    expect(calcularPrecioVenta(CONFIG_INICIAL, "32", "")).toBeNull();
+    expect(calcularPrecioVenta(CONFIG_INICIAL, "32", "-1")).toBeNull();
+    expect(calcularPrecioVenta(CONFIG_INICIAL, "0", "300")).toBeNull();
+    const sinPrecio = { ...CONFIG_INICIAL, productos: CONFIG_INICIAL.productos.map((p) => (p.id === "CUBITOS" ? { ...p, precioVenta: null } : p)) };
+    expect(calcularPrecioVenta(sinPrecio, "32", "300")).toBeNull();
+  });
+
+  it("precios de hoy: vacío deja Configuración; con precio cambia solo Cubitos/Moñitos", () => {
+    expect(conPreciosDeHoy(CONFIG_INICIAL, "", "")).toEqual(CONFIG_INICIAL);
+    expect(conPreciosDeHoy(CONFIG_INICIAL, "0", "abc")).toEqual(CONFIG_INICIAL);
+    const hoy = conPreciosDeHoy(CONFIG_INICIAL, "7.000", "3500,5");
+    const precio = (id: string) => hoy.productos.find((p) => p.id === id)!.precioVenta;
+    expect(precio("CUBITOS")).toBe("7000");
+    expect(precio("MONITOS")).toBe("3500.5");
+    for (const p of hoy.productos)
+      if (p.id !== "CUBITOS" && p.id !== "MONITOS") expect(p).toEqual(CONFIG_INICIAL.productos.find((q) => q.id === p.id));
+    // Con los precios de hoy, la calculadora hace la misma cuenta de siempre.
+    const antes = calcularTacoOptimo(CONFIG_INICIAL, "32", "")!.maximoKg!;
+    const despues = calcularTacoOptimo(hoy, "32", "")!.maximoKg!;
+    expect(despues.gt(antes)).toBe(true);
+  });
+});

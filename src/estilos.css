@@ -33,6 +33,17 @@
   --shadow: 0 1px 2px #0b1b3f0a, 0 4px 16px #0b1b3f0d;
   --shadow-sm: 0 1px 3px #00000014;
   --shadow-lg: 0 8px 30px #0003;
+  /* Inicio con estilo de lista (como los ajustes del teléfono) */
+  --lista-bg: #f2f2f7;
+  --lista-fila: #fff;
+  --lista-sep: #c6c6c8;
+  --lista-toque: #e5e5ea;
+  --lista-ink: #000;
+  --lista-gris: #8e8e93;
+  --lista-cap: #6d6d72;
+  --lista-flecha: #c4c4c7;
+  /* Rayita de las tablas que van sobre fondo claro u oscuro (cuenta del límite) */
+  --linea-neutra: #7f7f7f40;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -65,6 +76,15 @@
     --shadow: 0 1px 2px #0006, 0 4px 16px #0005;
     --shadow-sm: 0 1px 3px #0008;
     --shadow-lg: 0 8px 30px #000a;
+    --lista-bg: #000;
+    --lista-fila: #1c1c1e;
+    --lista-sep: #38383a;
+    --lista-toque: #2c2c2e;
+    --lista-ink: #fff;
+    --lista-gris: #8d8d93;
+    --lista-cap: #8d8d93;
+    --lista-flecha: #5a5a5f;
+    --linea-neutra: #7f7f7f40;
     color-scheme: dark;
   }
 }
@@ -97,6 +117,15 @@
   --shadow: 0 1px 2px #0006, 0 4px 16px #0005;
   --shadow-sm: 0 1px 3px #0008;
   --shadow-lg: 0 8px 30px #000a;
+  --lista-bg: #000;
+  --lista-fila: #1c1c1e;
+  --lista-sep: #38383a;
+  --lista-toque: #2c2c2e;
+  --lista-ink: #fff;
+  --lista-gris: #8d8d93;
+  --lista-cap: #8d8d93;
+  --lista-flecha: #5a5a5f;
+  --linea-neutra: #7f7f7f40;
   color-scheme: dark;
 }
 * {
@@ -1222,79 +1251,97 @@ a.brand {
 }
 .inicio {
   max-width: 560px;
-  margin: 24px auto 0;
+  margin: 28px auto 0;
+  font-family: -apple-system, "SF Pro Text", "Inter Variable", Inter, system-ui, sans-serif;
 }
-.inicio-k {
-  color: var(--blue);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 13px;
-  font-weight: 800;
+html.en-inicio,
+html.en-inicio body,
+html.en-inicio main,
+html.en-inicio body:before {
+  background: var(--lista-bg);
 }
 .inicio h1 {
-  letter-spacing: -0.03em;
-  margin-top: 6px;
+  letter-spacing: 0.01em;
+  margin: 0 4px;
   font-size: 34px;
-  font-weight: 900;
+  font-weight: 700;
 }
 .inicio-s {
-  color: var(--ink-3);
-  margin: 6px 0 28px;
-  font-size: 16px;
-  font-weight: 600;
+  color: var(--lista-gris);
+  margin: 6px 4px 22px;
+  font-size: 15px;
+  font-weight: 400;
 }
-.inicio-op {
-  border: 1.5px solid var(--line);
-  box-shadow: var(--shadow);
-  color: var(--ink);
-  background: var(--surface);
-  border-radius: 18px;
+.inicio-cap {
+  color: var(--lista-cap);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 16px 6px;
+  font-size: 13px;
+}
+.inicio-grupo {
+  background: var(--lista-fila);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.inicio-fila {
+  color: var(--lista-ink);
   align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
-  padding: 20px;
+  gap: 14px;
+  padding: 11px 16px;
   text-decoration: none;
   display: flex;
+  position: relative;
 }
-.inicio-op:active {
-  transform: scale(0.98);
+.inicio-fila + .inicio-fila:before {
+  content: "";
+  border-top: 0.5px solid var(--lista-sep);
+  position: absolute;
+  top: 0;
+  left: 62px;
+  right: 0;
 }
-.inicio-op .ic {
-  border-radius: 16px;
+.inicio-fila:active {
+  background: var(--lista-toque);
+}
+.inicio-fila .ic {
+  border-radius: 8px;
   flex: none;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 32px;
+  height: 32px;
   display: grid;
 }
-.inicio-op .ic.navy {
+.inicio-fila .ic.navy {
   background: var(--navy);
 }
-.inicio-op .ic.blue {
+.inicio-fila .ic.blue {
   background: var(--blue);
 }
-.inicio-op .tx {
+.inicio-fila .tx {
   flex-direction: column;
   min-width: 0;
   display: flex;
 }
-.inicio-op .t {
-  letter-spacing: -0.02em;
-  font-size: 22px;
-  font-weight: 900;
+.inicio-fila .t {
+  font-size: 17px;
+  font-weight: 400;
 }
-.inicio-op .d {
-  color: var(--ink-2);
-  margin-top: 2px;
-  font-size: 14px;
-  font-weight: 600;
+.inicio-fila .d {
+  color: var(--lista-gris);
+  margin-top: 1px;
+  font-size: 13px;
 }
-.inicio-op .ch {
-  color: var(--blue);
+.inicio-fila .ch {
+  color: var(--lista-flecha);
   margin-left: auto;
-  font-size: 30px;
-  font-weight: 900;
-  line-height: 1;
+  font-size: 22px;
+  font-weight: 300;
+}
+.inicio-pie {
+  color: var(--lista-cap);
+  margin: 8px 16px;
+  font-size: 13px;
 }
 .mb {
   margin-bottom: 12px;
@@ -1459,4 +1506,161 @@ tbody tr.click:focus-visible td {
   color: var(--ink-3);
   font-size: 14px;
   font-weight: 600;
+}
+
+/* Calculadora: precios de hoy, precio de venta y "Cómo calcula" (traído del artefacto, 24/11/2026) */
+.calc-hoy {
+  border-color: var(--blue);
+}
+.calc-modo {
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: var(--bg-soft);
+  border-radius: 99px;
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-block;
+}
+.calc-modo.hoy {
+  color: var(--on-accent);
+  background: var(--blue);
+}
+.calc-como h3 {
+  color: var(--blue);
+  margin: 4px 0 6px;
+  font-size: 15px;
+}
+.calc-pide {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.calc-pide .calc-si,
+.calc-pide .calc-no {
+  margin-top: 6px;
+}
+.pv-lista {
+  border-top: 1px solid var(--line);
+}
+.pv-fila {
+  border-bottom: 1px solid var(--line);
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  display: flex;
+}
+.pv-nom {
+  font-size: 16px;
+  font-weight: 700;
+}
+.pv-hoy {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+.pv-der {
+  text-align: right;
+}
+.pv-min {
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 800;
+}
+.pv-dif {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pv-dif.ok {
+  color: var(--ok);
+}
+.pv-dif.mal {
+  color: var(--bad);
+}
+
+/* Cuenta del Precio Límite (tarjeta y "¿Por qué el precio límite?") */
+.cuenta-lim {
+  margin: 10px 0 6px;
+}
+.cuenta-lim table {
+  table-layout: fixed;
+  width: 100%;
+}
+.cuenta-lim th,
+.cuenta-lim td {
+  color: inherit;
+  white-space: normal;
+  border-bottom: 1px solid var(--linea-neutra);
+  padding: 5px 2px;
+  font-size: 12.5px;
+}
+.cuenta-lim th {
+  opacity: 0.8;
+  font-size: 10.5px;
+}
+.cuenta-lim table.prod th:first-child {
+  width: 42%;
+}
+.cuenta-lim table.prod th:nth-child(2) {
+  width: 20%;
+}
+.cuenta-lim table.prod th:nth-child(3) {
+  width: 38%;
+}
+.cuenta-lim table.cta td:first-child {
+  width: 58%;
+}
+.cuenta-lim td.r,
+.cuenta-lim th.r {
+  white-space: nowrap;
+}
+.cuenta-lim tr.tot td {
+  border-bottom: 0;
+  font-weight: 800;
+}
+
+/* Textos explicativos más chicos y suaves, para que resalten los números (artefacto, 24/11/2026) */
+.card-head .sub,
+.calc-head .sub,
+.page-head p,
+.calc-nota,
+.calc-nota2,
+.calc-opt,
+.calc-como p,
+.calc-como ul,
+.calc-como li,
+.kpi .s,
+p.muted,
+.explicacion-detalle,
+.explicacion-detalle p,
+.explicacion-detalle li,
+.resumen-enc,
+.resumen-concl,
+.resumen-concl li,
+.cmp .s {
+  line-height: 1.45;
+  color: var(--ink-3) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+.calc-nota2 b,
+.calc-como b,
+.resumen-concl b {
+  color: var(--ink-2);
+  font-weight: 800;
+}
+.precio-card .d,
+.precio-card .exp,
+.precio-card .exp p,
+.precio-card .exp li {
+  line-height: 1.45;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+.precio-card .d {
+  opacity: 0.85;
 }

@@ -65,6 +65,8 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.screenshot({ path: OUT + '/02-nueva-partida.png', fullPage: true });
   await page.click('text=Tocá para ver la explicación >> nth=0');
   ok((await texto()).includes('Pagando hasta'), 'explicación del límite se abre');
+  ok((await texto()).includes('= Queda para la zanahoria') && (await texto()).includes('Total vendido'), 'explicación del límite muestra la cuenta en números');
+  await page.screenshot({ path: OUT + '/02b-cuenta-limite.png', fullPage: true });
   await page.click('button:has-text("Guardar partida")');
   await page.waitForSelector('text=← Historial');
   ok(page.url().endsWith('#historial-1'), 'guardó como partida 1: ' + page.url());
@@ -145,6 +147,17 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.getByLabel('Precio que pide el productor').fill('900');
   await page.waitForTimeout(200);
   ok((await texto()).includes('No lo podés pagar'), 'calculadora: 900 no alcanza');
+  await page.getByLabel('Cubitos', { exact: true }).fill('9000');
+  await page.waitForSelector('text=Precio límite con los precios de hoy');
+  ok(/Subió \$ [\d.,]+ por kilo/.test(await texto()), 'calculadora: con Cubitos más caro, el límite sube');
+  await page.getByLabel('Precio que pagás la zanahoria').fill('300');
+  await page.waitForSelector('.pv-fila');
+  ok((await page.locator('.pv-fila').count()) > 0 && (await texto()).includes('Mín. $'), 'calculadora: precio mínimo de venta por producto');
+  await page.click('summary:has-text("Cómo calcula la Calculadora")');
+  ok((await texto()).includes('3. Precio de venta') && (await texto()).includes('Factor:'), 'calculadora: explica las tres cuentas');
+  await page.screenshot({ path: OUT + '/06-calculadora.png', fullPage: true });
+  await page.click('button:has-text("Volver a los precios de Configuración")');
+  ok(!(await texto()).includes('Precio límite con los precios de hoy'), 'calculadora: vuelve a los precios de Configuración');
 
   // --- Transporte ---
   await page.goto(URL + '#t-configuracion');

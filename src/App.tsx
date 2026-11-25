@@ -42,14 +42,14 @@ const MENU_TRANSPORTE: [string, string][] = [
 ];
 
 const IconoLavadero = () => (
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M15.5 8.5c-1.8-1.8-4.3-1.3-5.8.2L3.3 19.4c-.5.8.5 1.8 1.3 1.3l10.7-6.4c1.5-1.5 2-4-.2-5.8z" />
     <path d="M8.2 12.8l1.6 1.6M10.6 10.4l1.3 1.3M6.4 15.8l1.2 1.2" />
     <path d="M15.5 8.5c-.3-2 .4-4 2-5.5M15.5 8.5c2 .3 4-.4 5.5-2M15.5 8.5l3.5-3.5" />
   </svg>
 );
 const IconoTransporte = () => (
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M3 7h11v9H3zM14 10h4l3 3v3h-7" />
     <circle cx="7" cy="17.5" r="1.8" fill="#fff" />
     <circle cx="17" cy="17.5" r="1.8" fill="#fff" />
@@ -57,35 +57,43 @@ const IconoTransporte = () => (
 );
 
 function Inicio({ yo, alSalir }: { yo: string; alSalir: () => void }) {
+  // El inicio tiene su propio fondo gris (estilo lista del teléfono).
+  useEffect(() => {
+    document.documentElement.classList.add("en-inicio");
+    return () => document.documentElement.classList.remove("en-inicio");
+  }, []);
   return (
     <div className="inicio">
-      <div className="inicio-k">Inicio</div>
       <h1>Dirección Oficina</h1>
       <p className="inicio-s">¿Qué querés ver?</p>
-      <a href="#nueva" className="inicio-op">
-        <span className="ic navy">
-          <IconoLavadero />
-        </span>
-        <span className="tx">
-          <span className="t">Lavadero</span>
-          <span className="d">Partidas, precios y calculadora</span>
-        </span>
-        <span className="ch" aria-hidden="true">
-          ›
-        </span>
-      </a>
-      <a href="#t-nuevo" className="inicio-op">
-        <span className="ic blue">
-          <IconoTransporte />
-        </span>
-        <span className="tx">
-          <span className="t">Transporte</span>
-          <span className="d">Viajes, gastos y ganancia</span>
-        </span>
-        <span className="ch" aria-hidden="true">
-          ›
-        </span>
-      </a>
+      <div className="inicio-cap">Secciones</div>
+      <div className="inicio-grupo">
+        <a href="#nueva" className="inicio-fila">
+          <span className="ic navy">
+            <IconoLavadero />
+          </span>
+          <span className="tx">
+            <span className="t">Lavadero</span>
+            <span className="d">Partidas, precios y calculadora</span>
+          </span>
+          <span className="ch" aria-hidden="true">
+            ›
+          </span>
+        </a>
+        <a href="#t-nuevo" className="inicio-fila">
+          <span className="ic blue">
+            <IconoTransporte />
+          </span>
+          <span className="tx">
+            <span className="t">Transporte</span>
+            <span className="d">Viajes, gastos y ganancia</span>
+          </span>
+          <span className="ch" aria-hidden="true">
+            ›
+          </span>
+        </a>
+      </div>
+      <p className="inicio-pie">Tocá una sección para entrar.</p>
       <p className="quien-soy">
         Entraste como <b>{yo}</b> · <a href="#personas">Personas</a> ·{" "}
         <a
