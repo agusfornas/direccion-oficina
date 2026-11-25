@@ -1415,90 +1415,77 @@ tbody tr.click:focus-visible td {
   }
 }
 
-/* Entrada: tarjetas + PIN */
+/* Entrada: lista de personas + PIN, con el mismo estilo de lista que el inicio */
 .entrada {
-  max-width: 420px;
-  margin: 24px auto 0;
+  max-width: 560px;
 }
-.entrada h1 {
-  letter-spacing: -0.03em;
-  margin-top: 6px;
-  font-size: 30px;
-  font-weight: 900;
-}
-.tarjetas {
-  display: grid;
-  gap: 12px;
-}
-.tarjeta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 16px 18px;
-  border: 1.5px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: var(--shadow);
-  cursor: pointer;
+.entrada .inicio-s {
   text-align: left;
-  font-weight: 800;
 }
-.tarjeta:hover {
-  border-color: var(--blue);
+button.inicio-fila {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.tarjeta .avatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: var(--navy);
+.inicio-fila .ic.avatar {
   color: var(--on-accent);
-  font-size: 20px;
+  font-size: 16px;
+  font-weight: 600;
 }
-.tarjeta .t {
-  font-size: 20px;
+.volver-lista {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0 4px 14px;
+  color: var(--blue);
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
 }
 .pin {
   display: grid;
-  gap: 22px;
+  gap: 26px;
   justify-items: center;
   margin-top: 18px;
 }
 .pin-puntos {
   display: flex;
-  gap: 16px;
+  gap: 18px;
 }
 .pin-puntos i {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px solid var(--ink-3);
+  border: 1.5px solid var(--lista-ink);
 }
 .pin-puntos i.lleno {
-  background: var(--blue);
-  border-color: var(--blue);
+  background: var(--lista-ink);
 }
 .pin-teclas {
   display: grid;
   grid-template-columns: repeat(3, 76px);
-  gap: 12px;
+  gap: 16px 24px;
 }
 .pin-teclas button {
-  height: 64px;
-  border: 1.5px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 24px;
-  font-weight: 800;
+  width: 76px;
+  height: 76px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lista-fila);
+  color: var(--lista-ink);
+  font-size: 30px;
+  font-weight: 400;
   cursor: pointer;
 }
 .pin-teclas button:active {
-  background: var(--blue-soft);
+  background: var(--lista-toque);
+}
+.pin-teclas button[aria-label="Borrar"] {
+  background: none;
+  font-size: 24px;
 }
 .quien-soy {
   margin-top: 28px;
