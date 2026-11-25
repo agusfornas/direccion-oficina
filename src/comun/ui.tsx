@@ -208,7 +208,7 @@ export function useDesplegable(): [boolean, Record<string, unknown>] {
   ];
 }
 
-/** Botón "Eliminar" con confirmación en la misma pantalla (claude.ai no muestra confirm()). */
+/** Botón "Eliminar" con confirmación en la misma pantalla (sin ventanitas del navegador). */
 export function BotonEliminar({ onEliminar, texto = "Eliminar" }: { onEliminar: () => Promise<void>; texto?: string }) {
   const [preguntando, setPreguntando] = useState(false);
   const [trabajando, setTrabajando] = useState(false);

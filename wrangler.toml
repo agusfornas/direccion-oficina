@@ -1,0 +1,16 @@
+# Configuración de Cloudflare Pages. Ver CLOUDFLARE.md para cómo completarla.
+name = "direccion-oficina"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-04-01"
+
+# La base de datos (creada en la cuenta de Cloudflare de Mauricio el 25/11/2026).
+[[d1_databases]]
+binding = "DB"
+database_name = "direccion-oficina"
+database_id = "03f0511f-3234-4794-85d9-0e3e69d46606"
+
+# Cloudflare Access (paso 5 de CLOUDFLARE.md). No son secretos: identifican la app de login.
+# Mientras estén vacíos, el servidor no deja entrar a nadie (es lo seguro).
+[vars]
+ACCESS_EQUIPO = ""
+ACCESS_AUD = ""

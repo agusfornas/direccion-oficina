@@ -1,16 +1,18 @@
 <!doctype html>
-<!-- Solo para probar en la computadora (npm run dev). Lo que se publica es dist/index.html,
-     armado desde src/pagina.html por scripts/armar-pagina.mjs. -->
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <link rel="stylesheet" href="/src/estilos.css" />
+    <meta name="theme-color" content="#0B1B3F" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" />
-    <title>Dirección Oficina (local)</title>
+    <title>Dirección Oficina</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div style="padding:40px 16px;text-align:center;font-family:Inter,system-ui,sans-serif;color:#4a5263;font-weight:600">Cargando…</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

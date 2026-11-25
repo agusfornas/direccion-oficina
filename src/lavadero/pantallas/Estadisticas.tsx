@@ -2,7 +2,7 @@
 // tabla mensual y comparación por productor.
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, LabelList, Line, LineChart, ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis } from "recharts";
-import { descargar } from "../../comun/claude";
+import { descargar } from "../../comun/servidor";
 import { agrupar, hoy, mesDe, MESES, nombreMes } from "../../comun/fechas";
 import { ColumnaOrdenable, COLOR, CURSOR_BARRA, mesCorto, TICK, Tooltip } from "../../comun/graficos";
 import { conSigno, numero, numeroFijo, plata, porcentaje } from "../../comun/numeros";

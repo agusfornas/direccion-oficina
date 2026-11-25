@@ -1,7 +1,5 @@
 // Tarjeta "Historial de cambios": quién creó, corrigió o eliminó un registro y cuándo.
-// Nuevo en la v2 (en la v1 se guardaba la fecha pero no la persona).
-import { useEffect, useState } from "react";
-import { nombres } from "./claude";
+// "Quién" es el email con el que la persona entró (lo anota el servidor según el login).
 
 interface Cambio {
   accion: "crear" | "modificar" | "eliminar";
@@ -12,11 +10,6 @@ interface Cambio {
 const VERBO = { crear: "Creada", modificar: "Corregida", eliminar: "Eliminada" } as const;
 
 export function Cambios({ cambios, femenino = true }: { cambios: Cambio[]; femenino?: boolean }) {
-  const [quienes, setQuienes] = useState<Record<string, string>>({});
-  useEffect(() => {
-    // Los nombres se piden cada vez (no se guardan): si alguien cambia su nombre, se ve el nuevo.
-    nombres(cambios.map((c) => c.quien ?? "").filter(Boolean)).then(setQuienes);
-  }, [cambios]);
   if (!cambios.length) return null;
   const verbo = (a: Cambio["accion"]) => (femenino ? VERBO[a] : VERBO[a].replace(/a$/, "o"));
   return (
@@ -29,7 +22,7 @@ export function Cambios({ cambios, femenino = true }: { cambios: Cambio[]; femen
               {verbo(c.accion)} el {c.fecha.slice(8, 10)}/{c.fecha.slice(5, 7)}/{c.fecha.slice(0, 4)} a las {c.fecha.slice(11, 16)}
               <span className="quien">
                 {" · "}
-                {c.quien ? (quienes[c.quien] ?? "una persona del equipo") : "sin registro de quién (v1)"}
+                {c.quien && c.quien.includes("@") ? c.quien : "sin registro de quién (app vieja)"}
               </span>
             </li>
           ))}

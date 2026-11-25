@@ -1,46 +1,47 @@
-# Mudanza de datos: de la app vieja (v1) a la nueva (v2)
+# Mudanza de datos: de la app vieja (claude.ai) a la nueva (Cloudflare)
 
-Se hace **una sola vez**, después de la primera publicación de la v2 (`PUBLICAR.md`).
-La tiene que hacer **el Claude del dueño de la app vieja**: solo él puede leer esa base.
+Se hace **una sola vez**, después de `CLOUDFLARE.md` y antes de que el equipo empiece a cargar.
+Los datos se guardan con **la misma forma** que en la app vieja: es copiarlos tal cual.
 
-La v2 guarda los datos con **la misma forma** que la v1, así que la mudanza es copiar los
-documentos tal cual. No hay que transformar nada.
+La hace **Mauricio**: es el dueño de la app vieja (el único que puede leer esos datos) y de la
+cuenta de Cloudflare (donde se cargan). Si otra persona lo ayuda, tiene que ser miembro de esa cuenta.
 
 ## Antes de empezar
+Avisá al equipo que **no cargue nada en ninguna de las dos apps** mientras dura (unos minutos).
 
-1. Avisá al equipo que **no cargue nada en ninguna de las dos apps** mientras dura la mudanza
-   (son unos minutos). Si alguien carga en la vieja después de copiar, ese dato no pasa.
-2. Anotá las dos direcciones:
-   - Vieja: `https://claude.ai/artifact/EgmmBquYxip6WDy8Djxr8p`
-   - Nueva: la que está en `CLAUDE.md` → "Dónde está publicada".
+## Paso 1: bajar los datos de la app vieja (el Claude del autor, en claude.ai o Claude Code)
+Con la herramienta **ArtifactData**, sobre `https://claude.ai/artifact/EgmmBquYxip6WDy8Djxr8p`:
+- `action: "list"`, `collection: "partidas"`, `query: {"limit": 1000}`, `out_dir: "mudanza"`.
+  Si la respuesta trae `next_cursor`, repetir con `query.cursor` hasta que no traiga más.
+- Lo mismo con `config`, `tviajes` y `tconfig`.
 
-## Pasos (para Claude, con la herramienta ArtifactData)
+Queda una carpeta `mudanza/` con `partidas/p1.json`, `config/v1.json`, etc. **Contá cuántos
+archivos hay por colección y anotalo.**
 
-1. **Leer la vieja**, colección por colección, guardando en archivos:
-   `action: "list"`, `url`: la vieja, `collection`: `config`, `query: {"limit": 1000}`,
-   `out_dir`: una carpeta temporal. Repetir con `partidas`, `tconfig` y `tviajes`.
-   Si alguna respuesta trae `next_cursor`, seguir pidiendo con ese cursor hasta que no traiga más.
-2. **Contar** cuántos documentos hay en cada colección y decírselo a la persona antes de escribir.
-3. **Revisar que la nueva esté vacía** (`list` de las mismas colecciones en la nueva).
-   Si la nueva ya tiene partidas o viajes, **pará y preguntá**: copiar encima mezclaría datos.
-   (Si solo tiene `config/v1` o `tconfig/v1` creados al abrirla, se pueden pisar con los de la vieja.)
-4. **Escribir en la nueva** con `action: "batch"`, de a 50 documentos por vez, `op: "set"`,
-   con **la misma colección y el mismo `doc_id`** que tenían (por ejemplo `partidas` / `p12`) y
-   el contenido tal cual (`file_path` al archivo bajado en el paso 1).
-   Si un documento ya existe en la nueva (por ejemplo `config/v1`), la herramienta pide su `version`
-   como `if_version`: leelo primero y pasala.
-   No copies nada de las colecciones `candados` ni `contadores` (la v1 no las tiene; la v2 las crea sola).
-5. **Verificar**: volver a contar en la nueva; tiene que dar lo mismo que en el paso 2.
-6. **Probar**: abrir la nueva, ir a Lavadero → Historial y Transporte → Historial, y confirmar con
-   la persona que ve sus datos.
+⚠ Son datos reales de la empresa: no los subas a GitHub (la carpeta `mudanza/` y el archivo
+`importar.sql` están excluidos a propósito). Si los tenés que pasar a otra persona, hacelo por
+un medio privado.
+
+## Paso 2: armar el archivo de carga
+Desde la carpeta del repo, con la carpeta `mudanza/` adentro:
+```bash
+node scripts/importar.mjs mudanza
+```
+Dice cuántos documentos encontró por colección: tiene que coincidir con lo anotado.
+
+## Paso 3: cargar en Cloudflare (quien tiene acceso a la cuenta, en su computadora)
+```bash
+npx wrangler login
+npx wrangler d1 execute direccion-oficina --remote --file=importar.sql
+```
+`wrangler login` abre el navegador para entrar a Cloudflare. Si se corre de nuevo, no duplica
+nada: reemplaza lo que ya estaba.
+
+## Paso 4: comprobar
+Abrir la app, ir a Lavadero → Historial y Transporte → Historial y ver los datos. Crear una partida
+de prueba: tiene que tomar el número siguiente al más alto mudado. Eliminarla.
 
 ## Después
-
-- Compartir la app nueva con el equipo (ver "Quién puede cargar datos" en `PUBLICAR.md`).
-- La app vieja **no se borra**: queda como respaldo. Conviene sacarle el acceso al equipo para
-  que nadie cargue ahí por costumbre.
-- Anotar en `PENDIENTES.md` que la mudanza está hecha, con la fecha y cuántos documentos se copiaron.
-
-## Si algo sale mal
-
-La mudanza no toca la app vieja (solo la lee). En el peor caso, se vacía la nueva y se vuelve a empezar.
+- Borrar `mudanza/` e `importar.sql` de la computadora.
+- La app vieja no se borra: queda como respaldo. Sacarle el acceso al equipo para que nadie cargue ahí.
+- Anotar en `PENDIENTES.md` la fecha y cuántos documentos se mudaron.

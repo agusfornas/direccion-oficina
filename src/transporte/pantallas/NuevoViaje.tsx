@@ -1,6 +1,6 @@
 // Pantalla "Nuevo viaje" (y "Corregir viaje" cuando viene editarId).
 import { useEffect, useMemo, useState } from "react";
-import { ErrorApp } from "../../comun/claude";
+import { ErrorApp } from "../../comun/servidor";
 import { hoy } from "../../comun/fechas";
 import { plata, porcentaje } from "../../comun/numeros";
 import { avisar, Campo, Cargando, ir, mensajeDe, Numero } from "../../comun/ui";

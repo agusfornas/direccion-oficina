@@ -1,7 +1,7 @@
 // Pantalla "Estadísticas" de Transporte: totales del día, mes o año y evolución mensual.
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { descargar } from "../../comun/claude";
+import { descargar } from "../../comun/servidor";
 import { fechaCorta, hoy, MESES } from "../../comun/fechas";
 import { COLOR, TICK } from "../../comun/graficos";
 import { numero, plata, porcentaje } from "../../comun/numeros";

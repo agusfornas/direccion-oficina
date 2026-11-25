@@ -1,7 +1,7 @@
 // Pantalla "Configuración" de Lavadero. Cada vez que se guarda se crea una versión
 // nueva: las partidas viejas quedan calculadas con la versión que tenían.
 import { useEffect, useMemo, useState } from "react";
-import { ErrorApp } from "../../comun/claude";
+import { ErrorApp } from "../../comun/servidor";
 import { Decimal, numeroFijo, plata, porcentaje } from "../../comun/numeros";
 import { avisar, Campo, Cargando, mensajeDe, Numero, Opciones } from "../../comun/ui";
 import { fletePorTaco, fraccionesOptimas, gastoGeneralPorTaco } from "../calculo";
