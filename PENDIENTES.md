@@ -22,6 +22,13 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [ ] Desde ahora los cambios se hacen acá (GitHub → Cloudflare), no en el artefacto: si se toca el
   artefacto, la página real no se entera.
 
+## Datos de la empresa en el repo
+- [ ] **Hacer privado el repositorio de GitHub** (Settings → Change visibility → Private). Los valores de
+  arranque de Lavadero (`src/lavadero/config-inicial.ts`) tienen precios reales (Moños agregado el
+  25/11/2026 a pedido). Mientras el repo sea público, cualquiera los puede leer.
+- [ ] Cargar Moños (venta 6510, mano de obra 441,61) en Lavadero → Configuración de la app: los valores
+  de arranque no cambian una configuración ya guardada.
+
 ## Para decidir (no se tocó para no cambiar resultados)
 - [ ] **Precio pedido obligatorio.** El formulario exige "Precio solicitado o de referencia", pero el motor
   tiene preparado el caso "sin precio pedido" (paga límite × rendimiento) y las pantallas lo explican
