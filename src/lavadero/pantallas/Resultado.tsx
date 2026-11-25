@@ -1,8 +1,8 @@
 // Panel de resultado de una partida: precios, rendimiento, planilla, resumen y gastos.
 // Se usa en "Nueva partida" (en vivo mientras se carga) y en el detalle del historial.
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Kpi, useDesplegable } from "../../comun/ui";
-import { numero, numeroFijo, plata, porcentaje } from "../../comun/numeros";
+import { numero, numeroFijo, numeroOCero, plata, porcentaje, type Decimal } from "../../comun/numeros";
 import { explicarLimite, explicarRecomendado, resumenPartida, sinPrecioPedido } from "../explicaciones";
 import type { ResultadoPartida } from "../tipos";
 
@@ -41,10 +41,84 @@ function Textos({ textos }: { textos: string[] }) {
   );
 }
 
-function Explicacion({ abierta, textos }: { abierta: boolean; textos: string[] }) {
+/**
+ * La cuenta del Precio Límite en números: qué se vendió, qué se resta y lo que queda
+ * para la zanahoria, dividido por los kg brutos. Montos redondeados a pesos enteros.
+ */
+export function CuentaLimite({ r }: { r: ResultadoPartida }) {
+  if (r.precioLimite === null || !numeroOCero(r.ingresos).gt(0)) return null;
+  const $ = (v: string | null | Decimal) => plata(v === null ? null : numeroOCero(v.toString()).toDecimalPlaces(0).toString(), 0);
+  const vendidos = r.productos.filter((p) => numeroOCero(p.bolsas).gt(0));
+  const gastos: [string, string | null][] = [
+    ["Mano de obra", r.costoManoObra],
+    ["Bolsas", r.costoBolsas],
+    ["Entacada", r.costoEntacada],
+    ["Flete", r.costoFlete],
+    ["Gastos generales", r.costoGastosGenerales],
+  ];
+  const tuPct = numeroFijo(r.gananciaPct ?? "0", 0);
+  const queda = numeroOCero(r.ingresos).minus(numeroOCero(r.costosOperativos));
+  return (
+    <div className="cuenta-lim">
+      <table className="prod">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th className="r">Bolsas</th>
+            <th className="r">Venta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {vendidos.map((p) => (
+            <tr key={p.id}>
+              <td>{p.nombre}</td>
+              <td className="r">{numero(p.bolsas, 0)}</td>
+              <td className="r">{$(p.ingreso)}</td>
+            </tr>
+          ))}
+          <tr className="tot">
+            <td colSpan={2}>Total vendido</td>
+            <td className="r">{$(r.ingresos)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <table className="mt-s cta">
+        <tbody>
+          <tr>
+            <td>Venta</td>
+            <td className="r">{$(r.ingresos)}</td>
+          </tr>
+          {gastos.map(([n, v]) => (
+            <tr key={n}>
+              <td>{`− ${n}`}</td>
+              <td className="r">{$(v)}</td>
+            </tr>
+          ))}
+          {numeroOCero(r.costoGanancia).gt(0) && (
+            <tr>
+              <td>{`− Tu ${tuPct}\u00a0%`}</td>
+              <td className="r">{$(r.costoGanancia)}</td>
+            </tr>
+          )}
+          <tr className="tot">
+            <td>= Queda para la zanahoria</td>
+            <td className="r">{$(queda)}</td>
+          </tr>
+          <tr className="tot">
+            <td>{`÷ ${numero(r.kgBruto, 0)}\u00a0kg`}</td>
+            <td className="r">{`${plata(r.precioLimite)} por kilo`}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Explicacion({ abierta, textos, extra }: { abierta: boolean; textos: string[]; extra?: ReactNode }) {
   return abierta ? (
     <div className="exp">
       <Textos textos={textos} />
+      {extra}
       <span className="exp-hint">Tocá para cerrar</span>
     </div>
   ) : (
@@ -230,7 +304,7 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
               </div>
             </>
           )}
-          <Explicacion abierta={limiteAbierto} textos={explicarLimite(r, productor)} />
+          <Explicacion abierta={limiteAbierto} textos={explicarLimite(r, productor)} extra={<CuentaLimite r={r} />} />
         </div>
         <div className="precio-card blue clic" {...propsRec}>
           <div className="t">Precio Recomendado</div>

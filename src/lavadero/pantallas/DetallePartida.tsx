@@ -7,6 +7,7 @@ import { numero, numeroFijo, plata, porcentaje } from "../../comun/numeros";
 import { avisar, BotonEliminar, Cargando, ir, Kpi, mensajeDe } from "../../comun/ui";
 import * as datos from "../datos";
 import { excelPartida } from "../excel";
+import { CuentaLimite } from "./Resultado";
 import { explicarLimite, explicarRecomendado, sinPrecioPedido } from "../explicaciones";
 import type { Partida } from "../tipos";
 import { repetirPartida } from "./NuevaPartida";
@@ -119,6 +120,7 @@ export function DetallePartida({ id }: { id: number }) {
           <summary>¿Por qué el precio límite?</summary>
           <div className="explicacion-detalle">
             <Textos textos={explicarLimite(r, p.productor)} />
+            <CuentaLimite r={r} />
           </div>
         </details>
         <details className="mt-s">

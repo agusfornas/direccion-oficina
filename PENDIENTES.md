@@ -12,6 +12,15 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [ ] Un día de uso real con el equipo: cargar, corregir, eliminar, exportar Excel.
 - [ ] Borrar la copia de prueba de claude.ai (https://claude.ai/artifact/AMw7Dvu93AnLfj4TQU3ezr) y sacarle el acceso al equipo a la app vieja.
 
+## Traído del artefacto de claude.ai (versión del 24/11/2026)
+- [x] Calculadora de Lavadero: "Precios de venta de hoy" (probar otro precio de Cubitos/Moñitos sin tocar
+  Configuración) y "Precio de venta" (mínimo de cada producto según lo que se paga la zanahoria). Cuenta
+  nueva con pruebas: da igual que el artefacto en 2000 casos al azar (`src/pruebas/artefacto/`).
+- [x] Cuenta del Precio Límite en números (venta − gastos = queda para la zanahoria ÷ kg).
+- [x] Inicio con estilo de lista y textos explicativos más chicos.
+- [ ] Desde ahora los cambios se hacen acá (GitHub → Cloudflare), no en el artefacto: si se toca el
+  artefacto, la página real no se entera.
+
 ## Para decidir (no se tocó para no cambiar resultados)
 - [ ] **Precio pedido obligatorio.** El formulario exige "Precio solicitado o de referencia", pero el motor
   tiene preparado el caso "sin precio pedido" (paga límite × rendimiento) y las pantallas lo explican

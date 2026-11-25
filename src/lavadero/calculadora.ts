@@ -73,3 +73,62 @@ export function calcularTacoOptimo(c: ConfigLavadero, kgTacoTexto: string, pideT
     .map((p) => ({ id: p.id, nombre: p.nombre, actual: numeroOCero(p.precioVenta), nuevo: numeroOCero(p.precioVenta).times(factor).ceil() }));
   return res;
 }
+
+/**
+ * "Precios de venta de hoy": la misma configuración, pero con el precio de la bolsa de Cubitos
+ * y/o Moñitos que escribió la persona. Solo para la cuenta de la calculadora; no se guarda.
+ * Un precio vacío, cero o inválido deja el de Configuración.
+ */
+export function conPreciosDeHoy(c: ConfigLavadero, cubitosTexto: string, monitosTexto: string): ConfigLavadero {
+  const cubitos = leerEscrito(cubitosTexto);
+  const monitos = leerEscrito(monitosTexto);
+  return {
+    ...c,
+    productos: c.productos.map((p) =>
+      p.id === "CUBITOS" && cubitos && cubitos.gt(0)
+        ? { ...p, precioVenta: cubitos.toString() }
+        : p.id === "MONITOS" && monitos && monitos.gt(0)
+          ? { ...p, precioVenta: monitos.toString() }
+          : p,
+    ),
+  };
+}
+
+/**
+ * "Precio de venta": si pagás `pagaTexto` el kilo de zanahoria, a cuánto tenés que vender cada
+ * producto (como mínimo) para cubrir todos los costos de un taco óptimo y guardar tu % de ganancia.
+ *
+ *   costo del taco = pagado × kg del taco + mano de obra + bolsas + gastos generales + flete + entacada
+ *   venta mínima   = costo del taco ÷ (1 − % de ganancia)
+ *   factor         = venta mínima ÷ venta del taco con los precios de Configuración
+ *   mínimo         = precio de Configuración × factor, redondeado para arriba a pesos enteros
+ *
+ * Es la cuenta del Precio Límite dada vuelta: pagando justo el límite, el factor da 1.
+ * Devuelve null si falta algún dato para hacer la cuenta.
+ */
+export function calcularPrecioVenta(c: ConfigLavadero, kgTacoTexto: string, pagaTexto: string) {
+  const paga = leerEscrito(pagaTexto);
+  const taco = calcularTacoOptimo(c, kgTacoTexto, "");
+  if (!taco || paga === null || paga.lt(0) || taco.faltantes.length) return null;
+  const x = taco.detalle;
+  if (!x.ventas.gt(0)) return null;
+  const ganancia = numeroOCero(c.gananciaPct ?? "0").div(100);
+  if (ganancia.gte(1)) return null;
+  const costoTaco = paga.times(taco.kgTaco).plus(x.manoObra).plus(x.bolsasCosto).plus(x.gastosGenerales).plus(x.flete).plus(x.entacada);
+  const ventaMinima = costoTaco.div(new Decimal(1).minus(ganancia));
+  const factor = ventaMinima.div(x.ventas);
+  return {
+    costoTaco,
+    ventaMinima,
+    ventaActual: x.ventas,
+    factor,
+    gananciaPct: ganancia.times(100),
+    filas: c.productos
+      .filter((p) => p.precioVenta !== null && numeroOCero(p.precioVenta).gt(0))
+      .map((p) => {
+        const hoy = numeroOCero(p.precioVenta);
+        const minimo = hoy.times(factor).toDecimalPlaces(0, Decimal.ROUND_UP);
+        return { id: p.id, nombre: p.nombre, hoy, minimo, diferencia: hoy.minus(minimo) };
+      }),
+  };
+}
