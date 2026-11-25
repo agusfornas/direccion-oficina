@@ -4,7 +4,8 @@ Lista viva. Se tacha cuando está hecho y probado.
 
 ## Puesta en marcha (Cloudflare)
 - [x] Pasar de artefacto de claude.ai a página web con login por email (Cloudflare Pages + D1 + Access).
-- [ ] Crear la cuenta, la base, la página y el login (`CLOUDFLARE.md`).
+- [x] Crear la cuenta, la base, la página y el login (`CLOUDFLARE.md`). Hecho el 25/11/2026 en la cuenta de Mauricio;
+  por ahora solo puede entrar maurianchelonets@gmail.com.
 - [ ] Mudanza de datos desde la app vieja (`MUDANZA.md`).
 - [ ] Cargar los emails del equipo en Access y pasarles el enlace.
 - [ ] Un día de uso real con el equipo: cargar, corregir, eliminar, exportar Excel.

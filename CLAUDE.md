@@ -84,6 +84,6 @@ La base de prueba local vive en `.wrangler/estado/`; para empezar de cero, borr�
 
 ## Dónde está
 
-- App de la empresa: **(completar con la dirección de Cloudflare Pages, paso 3 de `CLOUDFLARE.md`)**
+- App de la empresa: https://direccion-oficina.pages.dev (cuenta de Cloudflare de Mauricio; login: Zero Trust → equipo `direccionoficina`)
 - Código: https://github.com/agusfornas/direccion-oficina
 - La v1 (app vieja): https://claude.ai/artifact/EgmmBquYxip6WDy8Djxr8p — respaldo hasta terminar `MUDANZA.md`.
