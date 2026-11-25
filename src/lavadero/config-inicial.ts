@@ -8,7 +8,7 @@ export const CONFIG_INICIAL: ConfigLavadero = {
     { id: "CUBITOS", nombre: "Cubitos", categoria: "ELEGIDA", kgBolsa: "10", eqCubitos: "1", eqGeneral: "0.5", precioVenta: "6000", manoObra: "487", costoBolsa: "250" },
     { id: "VEINTEX1", nombre: "20×1", categoria: "ELEGIDA", kgBolsa: "20", eqCubitos: "2", eqGeneral: "1", precioVenta: "21000", manoObra: "824", costoBolsa: "1150" },
     { id: "EXTRA", nombre: "Moños (Ext)", categoria: "ELEGIDA", kgBolsa: "20", eqCubitos: "2", eqGeneral: "1", precioVenta: "19000", manoObra: "636", costoBolsa: "350" },
-    { id: "MONOS", nombre: "Moños", categoria: "COMUN", kgBolsa: "20", eqCubitos: "0", eqGeneral: "1", precioVenta: null, manoObra: null, costoBolsa: "350" },
+    { id: "MONOS", nombre: "Moños", categoria: "COMUN", kgBolsa: "20", eqCubitos: "0", eqGeneral: "1", precioVenta: "6510", manoObra: "441.61", costoBolsa: "350" },
     { id: "MONITOS", nombre: "Moñitos", categoria: "COMUN", kgBolsa: "10", eqCubitos: "0", eqGeneral: "0.5", precioVenta: "3000", manoObra: "242", costoBolsa: "250" },
     { id: "INDUSTRIAL", nombre: "Industrial", categoria: "COMUN", kgBolsa: "20", eqCubitos: "0", eqGeneral: "1", precioVenta: "8000", manoObra: "411", costoBolsa: "350" },
   ],
