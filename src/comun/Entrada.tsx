@@ -56,6 +56,12 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
   const [ocupado, setOcupado] = useState(false);
   const [nombreNuevo, setNombreNuevo] = useState("");
 
+  // Mismo fondo gris que el inicio (estilo lista del teléfono).
+  useEffect(() => {
+    document.documentElement.classList.add("en-inicio");
+    return () => document.documentElement.classList.remove("en-inicio");
+  }, []);
+
   const cargar = () =>
     listar()
       .then((l) => (setLista(l), setError(null)))
@@ -98,10 +104,9 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
 
   if (lista.length === 0)
     return (
-      <div className="entrada">
-        <div className="inicio-k">Primera vez</div>
+      <div className="inicio entrada">
         <h1>Dirección Oficina</h1>
-        <p className="inicio-s">¿Cómo te llamás? Vas a ser la primera persona de la lista.</p>
+        <p className="inicio-s">Primera vez. ¿Cómo te llamás? Vas a ser la primera persona de la lista.</p>
         <form
           className="row"
           onSubmit={async (e) => {
@@ -125,16 +130,21 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
 
   if (!elegida)
     return (
-      <div className="entrada">
-        <div className="inicio-k">Dirección Oficina</div>
-        <h1>¿Quién sos?</h1>
-        <div className="tarjetas mt">
+      <div className="inicio entrada">
+        <h1 className="mb-lista">Dirección Oficina</h1>
+        <div className="inicio-cap">Personas</div>
+        <div className="inicio-grupo">
           {lista.map((p) => (
-            <button key={p.id} type="button" className="tarjeta" onClick={() => (setElegida(p), setAviso(""))}>
-              <span className="avatar" aria-hidden>
+            <button key={p.id} type="button" className="inicio-fila tarjeta" onClick={() => (setElegida(p), setAviso(""))}>
+              <span className="ic navy avatar" aria-hidden>
                 {p.nombre.slice(0, 1).toUpperCase()}
               </span>
-              <span className="t">{p.nombre}</span>
+              <span className="tx">
+                <span className="t">{p.nombre}</span>
+              </span>
+              <span className="ch" aria-hidden="true">
+                ›
+              </span>
             </button>
           ))}
         </div>
@@ -142,9 +152,9 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
     );
 
   return (
-    <div className="entrada">
-      <button type="button" className="btn sm ghost" style={{ marginLeft: -10 }} onClick={volver}>
-        ← Cambiar de persona
+    <div className="inicio entrada">
+      <button type="button" className="volver-lista" onClick={volver}>
+        ‹ Cambiar de persona
       </button>
       <h1>Hola, {elegida.nombre}</h1>
       <p className="inicio-s">
