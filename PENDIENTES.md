@@ -6,7 +6,7 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [x] Pasar de artefacto de claude.ai a página web (Cloudflare Pages + D1).
 - [x] Entrada con tarjeta + PIN de 4 números (25/11/2026, pedido del dueño; reemplazó al login por email de Access).
 - [x] Crear la cuenta, la base y la página (`CLOUDFLARE.md`). Hecho el 25/11/2026 en la cuenta de Mauricio.
-- [ ] Mauricio elige su PIN; después se saca el login por email de Cloudflare Access (Zero Trust → Access → Applications).
+- [x] Mauricio eligió su PIN y se sacó el login por email de Cloudflare Access (25/11/2026).
 - [ ] Mudanza de datos desde la app vieja (`MUDANZA.md`).
 - [ ] Agregar al equipo en la pantalla Personas y pasarles el enlace.
 - [ ] Un día de uso real con el equipo: cargar, corregir, eliminar, exportar Excel.
