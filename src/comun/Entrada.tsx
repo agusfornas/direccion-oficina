@@ -131,8 +131,7 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
   if (!elegida)
     return (
       <div className="inicio entrada">
-        <h1>Dirección Oficina</h1>
-        <p className="inicio-s">¿Quién sos?</p>
+        <h1 className="mb-lista">Dirección Oficina</h1>
         <div className="inicio-cap">Personas</div>
         <div className="inicio-grupo">
           {lista.map((p) => (
@@ -149,7 +148,6 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
             </button>
           ))}
         </div>
-        <p className="inicio-pie">Tocá tu nombre para entrar.</p>
       </div>
     );
 

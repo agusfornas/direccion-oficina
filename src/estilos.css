@@ -1419,6 +1419,9 @@ tbody tr.click:focus-visible td {
 .entrada {
   max-width: 560px;
 }
+.inicio h1.mb-lista {
+  margin-bottom: 22px;
+}
 .entrada .inicio-s {
   text-align: left;
 }
