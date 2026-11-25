@@ -4,7 +4,10 @@
 //   #inicio                          inicio (elegir Lavadero o Transporte)
 //   #nueva  #configuracion  #historial  #historial-12  #editar-12  #estadisticas  #calculadora   (Lavadero)
 //   #t-nuevo  #t-configuracion  #t-historial  #t-historial-7  #t-editar-7  #t-estadisticas  #t-calculadora   (Transporte)
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { Entrada } from "./comun/Entrada";
+import { Personas } from "./comun/Personas";
+import { olvidarQuienSoy, quienSoy, salir } from "./comun/servidor";
 import { Avisos, useHash } from "./comun/ui";
 import { Calculadora } from "./lavadero/pantallas/Calculadora";
 import { Configuracion } from "./lavadero/pantallas/Configuracion";
@@ -53,7 +56,7 @@ const IconoTransporte = () => (
   </svg>
 );
 
-function Inicio() {
+function Inicio({ yo, alSalir }: { yo: string; alSalir: () => void }) {
   return (
     <div className="inicio">
       <div className="inicio-k">Inicio</div>
@@ -83,14 +86,27 @@ function Inicio() {
           ›
         </span>
       </a>
+      <p className="quien-soy">
+        Entraste como <b>{yo}</b> · <a href="#personas">Personas</a> ·{" "}
+        <a
+          href="#inicio"
+          onClick={(e) => {
+            e.preventDefault();
+            alSalir();
+          }}
+        >
+          Salir
+        </a>
+      </p>
     </div>
   );
 }
 
 /** Decide qué pantalla mostrar. Devuelve también la sección y qué ítem del menú resaltar. */
-function pantallaPara(hash: string): { pantalla: ReactNode; seccion: string; menu: [string, string][]; activo: string } {
+function pantallaPara(hash: string, yo: string, alSalir: () => void): { pantalla: ReactNode; seccion: string; menu: [string, string][]; activo: string } {
   const ruta = hash.replace(/^#\/?/, "");
-  if (ruta === "" || ruta === "inicio") return { pantalla: <Inicio />, seccion: "", menu: [], activo: "" };
+  if (ruta === "" || ruta === "inicio") return { pantalla: <Inicio yo={yo} alSalir={alSalir} />, seccion: "", menu: [], activo: "" };
+  if (ruta === "personas") return { pantalla: <Personas yo={yo} />, seccion: "", menu: [], activo: "" };
   if (ruta.startsWith("t-")) {
     const [, que, num] = ruta.split("-");
     const id = num ? Number(num) : undefined;
@@ -119,7 +135,38 @@ function pantallaPara(hash: string): { pantalla: ReactNode; seccion: string; men
 
 export function App() {
   const hash = useHash();
-  const { pantalla, seccion, menu, activo } = pantallaPara(hash);
+  // undefined = averiguando; null = no entró (pantalla de tarjetas); texto = su nombre.
+  const [yo, setYo] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    quienSoy().then(setYo);
+    const vencida = () => {
+      olvidarQuienSoy();
+      setYo(null);
+    };
+    window.addEventListener("sesion-vencida", vencida);
+    return () => window.removeEventListener("sesion-vencida", vencida);
+  }, []);
+  const alSalir = async () => {
+    await salir().catch(() => {});
+    olvidarQuienSoy();
+    setYo(null);
+  };
+
+  if (yo === undefined) return <div className="vacio">Cargando…</div>;
+  if (yo === null)
+    return (
+      <main>
+        <Entrada
+          alEntrar={(nombre) => {
+            olvidarQuienSoy();
+            setYo(nombre);
+          }}
+        />
+        <Avisos />
+      </main>
+    );
+
+  const { pantalla, seccion, menu, activo } = pantallaPara(hash, yo, alSalir);
   return (
     <>
       {menu.length > 0 && (

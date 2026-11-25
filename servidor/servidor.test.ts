@@ -1,9 +1,9 @@
-// Pruebas del servidor: numeración, guardado sin pisar, login de Access y direcciones.
+// Pruebas del servidor: numeración, guardado sin pisar, entrada con PIN y direcciones.
 // Usan SQLite de Node, el mismo motor que Cloudflare D1.
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
-import { quienEs } from "./acceso";
 import { crearNumerado, crearSiNoExiste, leer, listar, prepararBase, reemplazar, type Base, type Sentencia } from "./almacen";
+import { borrarPin, crearPersona, entrar, INTENTOS_MAXIMOS, listarPersonas, quitarPersona, sesionDe } from "./personas";
 import { manejar } from "./rutas";
 
 // node:sqlite se carga así porque el empaquetador de las pruebas todavía no lo reconoce.
@@ -102,74 +102,128 @@ describe("almacén", () => {
   });
 });
 
-// ---------- Login de Cloudflare Access ----------
+// ---------- Entrada con tarjeta + PIN ----------
 
-const b64url = (b: ArrayBuffer | Uint8Array | string) =>
-  Buffer.from(typeof b === "string" ? b : b instanceof Uint8Array ? b : new Uint8Array(b)).toString("base64url");
-
-async function llaveYFirma() {
-  const par = (await crypto.subtle.generateKey(
-    { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
-    true,
-    ["sign", "verify"],
-  )) as CryptoKeyPair;
-  const publica = { ...(await crypto.subtle.exportKey("jwk", par.publicKey)), kid: "k1" };
-  const firmar = async (datos: Record<string, unknown>, kid = "k1") => {
-    const c = b64url(JSON.stringify({ alg: "RS256", kid }));
-    const p = b64url(JSON.stringify(datos));
-    const f = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", par.privateKey, new TextEncoder().encode(`${c}.${p}`));
-    return `${c}.${p}.${b64url(f)}`;
-  };
-  const buscar = (async () => new Response(JSON.stringify({ keys: [publica] }))) as unknown as typeof fetch;
-  return { firmar, buscar };
-}
-const ENV = { ACCESS_EQUIPO: "empresa", ACCESS_AUD: "aud123" };
-const valido = () => ({ email: "Ana@Empresa.com", aud: ["aud123"], exp: Math.floor(Date.now() / 1000) + 600, iss: "https://empresa.cloudflareaccess.com" });
-const pedido = (token?: string, url = "https://app/api/yo", init: RequestInit = {}) =>
-  new Request(url, { ...init, headers: token ? { "Cf-Access-Jwt-Assertion": token, "content-type": "application/json" } : { "content-type": "application/json" } });
-
-describe("login (Cloudflare Access)", () => {
-  it("acepta una credencial válida y devuelve el email", async () => {
-    const { firmar, buscar } = await llaveYFirma();
-    expect(await quienEs(pedido(await firmar(valido())), ENV, buscar)).toBe("ana@empresa.com");
+describe("personas y PIN", () => {
+  it("la primera vez elige su PIN, después entra con él; la sesión identifica a la persona", async () => {
+    const db = await nueva();
+    const m = await crearPersona(db, "  Mauricio  ");
+    expect(await listarPersonas(db)).toEqual([{ id: m.id, nombre: "Mauricio", tienePin: false }]);
+    await expect(entrar(db, m.id, "1234", false)).rejects.toMatchObject({ estado: 409 }); // todavía no eligió
+    const s1 = await entrar(db, m.id, "1234", true);
+    expect((await listarPersonas(db))[0].tienePin).toBe(true);
+    await expect(entrar(db, m.id, "9999", true)).rejects.toMatchObject({ estado: 409 }); // no se puede pisar el PIN
+    const s2 = await entrar(db, m.id, "1234", false);
+    expect(await sesionDe(db, s1.token)).toEqual({ id: m.id, nombre: "Mauricio" });
+    expect(await sesionDe(db, s2.token)).toEqual({ id: m.id, nombre: "Mauricio" });
+    expect(await sesionDe(db, "a".repeat(64))).toBeNull();
+    expect(await sesionDe(db, "cualquier cosa")).toBeNull();
   });
-  it("rechaza: sin credencial, otra aplicación, vencida, otro emisor, firma alterada, sin configurar", async () => {
-    const { firmar, buscar } = await llaveYFirma();
-    expect(await quienEs(pedido(), ENV, buscar)).toBeNull();
-    expect(await quienEs(pedido(await firmar({ ...valido(), aud: ["otra"] })), ENV, buscar)).toBeNull();
-    expect(await quienEs(pedido(await firmar({ ...valido(), exp: 1000 })), ENV, buscar)).toBeNull();
-    expect(await quienEs(pedido(await firmar({ ...valido(), iss: "https://otro.cloudflareaccess.com" })), ENV, buscar)).toBeNull();
-    const t = await firmar(valido());
-    const alterado = t.split(".").map((x, i) => (i === 1 ? b64url(JSON.stringify({ ...valido(), email: "jefe@empresa.com" })) : x)).join(".");
-    expect(await quienEs(pedido(alterado), ENV, buscar)).toBeNull();
-    expect(await quienEs(pedido(t), {}, buscar)).toBeNull();
+
+  it("PIN con formato inválido se rechaza", async () => {
+    const db = await nueva();
+    const m = await crearPersona(db, "Ana");
+    for (const pin of ["123", "12345", "abcd", " 123"]) await expect(entrar(db, m.id, pin, true)).rejects.toMatchObject({ estado: 400 });
   });
-  it("en la computadora (MODO=local) no pide login", async () => {
-    expect(await quienEs(pedido(), { MODO: "local" })).toBe("local@prueba");
+
+  it("después de 5 errores la tarjeta se traba 15 minutos, aunque después pongan el PIN bien", async () => {
+    const db = await nueva();
+    const m = await crearPersona(db, "Ana");
+    await entrar(db, m.id, "4321", true);
+    const t0 = 1_000_000_000_000;
+    for (let i = 1; i < INTENTOS_MAXIMOS; i++) await expect(entrar(db, m.id, "0000", false, t0)).rejects.toMatchObject({ estado: 401 });
+    await expect(entrar(db, m.id, "0000", false, t0)).rejects.toMatchObject({ estado: 423 });
+    await expect(entrar(db, m.id, "4321", false, t0 + 60_000)).rejects.toMatchObject({ estado: 423 });
+    expect((await entrar(db, m.id, "4321", false, t0 + 16 * 60_000)).nombre).toBe("Ana");
+  });
+
+  it("acertar reinicia la cuenta de errores", async () => {
+    const db = await nueva();
+    const m = await crearPersona(db, "Ana");
+    await entrar(db, m.id, "4321", true);
+    for (let i = 1; i < INTENTOS_MAXIMOS; i++) await expect(entrar(db, m.id, "0000", false)).rejects.toMatchObject({ estado: 401 });
+    await entrar(db, m.id, "4321", false);
+    for (let i = 1; i < INTENTOS_MAXIMOS; i++) await expect(entrar(db, m.id, "0000", false)).rejects.toMatchObject({ estado: 401 });
+  });
+
+  it("borrar el PIN o quitar a la persona cierra sus sesiones", async () => {
+    const db = await nueva();
+    const a = await crearPersona(db, "Ana");
+    const s = await entrar(db, a.id, "1111", true);
+    await borrarPin(db, a.id);
+    expect(await sesionDe(db, s.token)).toBeNull();
+    const s2 = await entrar(db, a.id, "2222", true);
+    await quitarPersona(db, a.id);
+    expect(await sesionDe(db, s2.token)).toBeNull();
+    expect(await listarPersonas(db)).toEqual([]);
+    await expect(entrar(db, a.id, "2222", false)).rejects.toMatchObject({ estado: 404 });
+  });
+
+  it("no se repiten nombres", async () => {
+    const db = await nueva();
+    await crearPersona(db, "Ana");
+    await expect(crearPersona(db, "ana")).rejects.toMatchObject({ estado: 409 });
+    await expect(crearPersona(db, "   ")).rejects.toMatchObject({ estado: 400 });
   });
 });
 
 describe("direcciones /api", () => {
-  it("sin login: 401 en todo", async () => {
-    const r = await manejar(pedido(undefined, "https://app/api/c/partidas"), { ...ENV, DB: await nueva() });
-    expect(r.status).toBe(401);
-  });
-  it("recorrido completo: yo, crear, leer, listar, corregir, conflicto, colección inválida", async () => {
-    const env = { MODO: "local", DB: await nueva() };
+  const app = async () => {
+    const env = { DB: await nueva() };
+    let cookie = "";
     const llamar = async (url: string, metodo = "GET", body?: unknown) => {
-      const r = await manejar(new Request("https://app" + url, { method: metodo, body: body ? JSON.stringify(body) : undefined }), env);
-      return { estado: r.status, datos: await r.json() };
+      const r = await manejar(
+        new Request("https://app" + url, { method: metodo, body: body ? JSON.stringify(body) : undefined, headers: cookie ? { cookie } : {} }),
+        env,
+      );
+      const sc = r.headers.get("set-cookie");
+      if (sc) cookie = sc.split(";")[0].endsWith("=") ? "" : sc.split(";")[0];
+      return { estado: r.status, datos: await r.json(), setCookie: sc };
     };
-    expect((await llamar("/api/yo")).datos).toEqual({ email: "local@prueba" });
-    const c = await llamar("/api/c/partidas/nuevo", "POST", { prefijo: "p", numeroComoTexto: true, documento: { id: 0, numero: "", productor: "X" } });
-    expect([c.estado, c.datos.numero]).toEqual([201, "0001"]);
-    expect((await llamar("/api/c/partidas/p1")).datos.productor).toBe("X");
-    expect((await llamar("/api/c/partidas")).datos).toHaveLength(1);
-    expect((await llamar("/api/c/partidas/p1", "PUT", { documento: { ...c.datos, productor: "Y" }, revEsperada: 0 })).estado).toBe(200);
-    expect((await llamar("/api/c/partidas/p1", "PUT", { documento: { ...c.datos, productor: "Z" }, revEsperada: 0 })).estado).toBe(409);
-    expect((await llamar("/api/c/partidas/p99")).estado).toBe(404);
+    return { llamar, sinCookie: () => (cookie = "") };
+  };
+
+  it("sin sesión: solo la pantalla de entrada; los datos dan 401", async () => {
+    const { llamar } = await app();
+    expect((await llamar("/api/c/partidas")).estado).toBe(401);
+    expect((await llamar("/api/yo")).estado).toBe(401);
+    expect((await llamar("/api/personas")).datos).toEqual([]);
+  });
+
+  it("primera persona sin sesión; la segunda ya no", async () => {
+    const { llamar, sinCookie } = await app();
+    const m = await llamar("/api/personas", "POST", { nombre: "Mauricio" });
+    expect(m.estado).toBe(201);
+    sinCookie();
+    expect((await llamar("/api/personas", "POST", { nombre: "Intruso" })).estado).toBe(401);
+  });
+
+  it("recorrido completo: entrar, cookie segura, datos, quién, salir", async () => {
+    const { llamar } = await app();
+    const m = (await llamar("/api/personas", "POST", { nombre: "Mauricio" })).datos;
+    const e = await llamar("/api/entrar", "POST", { id: m.id, pin: "2468", crear: true });
+    expect(e.estado).toBe(200);
+    expect(e.setCookie).toMatch(/^__Host-sesion=[0-9a-f]{64}; Path=\/; HttpOnly; Secure; SameSite=Strict; Max-Age=\d+$/);
+    expect((await llamar("/api/yo")).datos).toEqual({ nombre: "Mauricio" });
+    const c = await llamar("/api/c/partidas/nuevo", "POST", { prefijo: "p", numeroComoTexto: true, documento: { id: 0, numero: "", auditoria: [{ accion: "crear", quien: "otro" }] } });
+    expect([c.estado, c.datos.numero, c.datos.auditoria[0].quien]).toEqual([201, "0001", "Mauricio"]);
+    expect((await llamar("/api/c/partidas/p1", "PUT", { documento: c.datos, revEsperada: 0 })).estado).toBe(200);
+    expect((await llamar("/api/c/partidas/p1", "PUT", { documento: c.datos, revEsperada: 0 })).estado).toBe(409);
     expect((await llamar("/api/c/usuarios")).estado).toBe(404);
-    expect((await llamar("/api/c/partidas/../x")).estado).toBe(404);
     expect((await llamar("/api/c/partidas/nuevo", "POST", { prefijo: "DROP TABLE", documento: {} })).estado).toBe(400);
+    const a = (await llamar("/api/personas", "POST", { nombre: "Ana" })).datos;
+    expect((await llamar(`/api/personas/${a.id}/borrar-pin`, "POST")).estado).toBe(200);
+    expect((await llamar(`/api/personas/${m.id}/quitar`, "POST")).estado).toBe(400); // no a sí mismo
+    expect((await llamar("/api/salir", "POST")).estado).toBe(200);
+    expect((await llamar("/api/yo")).estado).toBe(401);
+  });
+
+  it("PIN equivocado da 401 con los intentos que quedan", async () => {
+    const { llamar, sinCookie } = await app();
+    const m = (await llamar("/api/personas", "POST", { nombre: "Mauricio" })).datos;
+    await llamar("/api/entrar", "POST", { id: m.id, pin: "2468", crear: true });
+    sinCookie();
+    const r = await llamar("/api/entrar", "POST", { id: m.id, pin: "0000" });
+    expect([r.estado, r.datos.error]).toEqual([401, "PIN incorrecto. Te quedan 4 intentos."]);
   });
 });

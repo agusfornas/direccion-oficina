@@ -1367,3 +1367,96 @@ tbody tr.click:focus-visible td {
     animation: none !important;
   }
 }
+
+/* Entrada: tarjetas + PIN */
+.entrada {
+  max-width: 420px;
+  margin: 24px auto 0;
+}
+.entrada h1 {
+  letter-spacing: -0.03em;
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 900;
+}
+.tarjetas {
+  display: grid;
+  gap: 12px;
+}
+.tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
+  font-weight: 800;
+}
+.tarjeta:hover {
+  border-color: var(--blue);
+}
+.tarjeta .avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--navy);
+  color: var(--on-accent);
+  font-size: 20px;
+}
+.tarjeta .t {
+  font-size: 20px;
+}
+.pin {
+  display: grid;
+  gap: 22px;
+  justify-items: center;
+  margin-top: 18px;
+}
+.pin-puntos {
+  display: flex;
+  gap: 16px;
+}
+.pin-puntos i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-3);
+}
+.pin-puntos i.lleno {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.pin-teclas {
+  display: grid;
+  grid-template-columns: repeat(3, 76px);
+  gap: 12px;
+}
+.pin-teclas button {
+  height: 64px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pin-teclas button:active {
+  background: var(--blue-soft);
+}
+.quien-soy {
+  margin-top: 28px;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 14px;
+  font-weight: 600;
+}

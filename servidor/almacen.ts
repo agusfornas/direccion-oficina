@@ -35,6 +35,8 @@ export class ErrorAlmacen extends Error {
 const ESQUEMA = `
 CREATE TABLE IF NOT EXISTS documentos (coleccion TEXT NOT NULL, id TEXT NOT NULL, datos TEXT NOT NULL, rev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (coleccion, id));
 CREATE TABLE IF NOT EXISTS contadores (coleccion TEXT PRIMARY KEY, ultimo INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS personas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, pin_hash TEXT, sal TEXT, intentos INTEGER NOT NULL DEFAULT 0, bloqueado_hasta INTEGER NOT NULL DEFAULT 0, activa INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS sesiones (token_hash TEXT PRIMARY KEY, persona_id INTEGER NOT NULL, vence INTEGER NOT NULL);
 `;
 const preparadas = new WeakSet<object>();
 /** Crea las tablas si no existen (una vez por arranque del servidor). */
@@ -50,7 +52,7 @@ const sinRev = (d: Doc) => {
   return JSON.stringify(resto);
 };
 
-/** Anota quién hizo el último cambio (el servidor lo sabe por el login; no se confía en la página). */
+/** Anota quién hizo el último cambio (el servidor lo sabe por la sesión; no se confía en la página). */
 function firmar(d: Doc, email: string): Doc {
   const a = d.auditoria;
   if (Array.isArray(a) && a.length) a[a.length - 1] = { ...(a[a.length - 1] as Doc), quien: email };

@@ -10,8 +10,8 @@ App interna de la empresa con dos secciones:
   el precio a pagar (Precio Límite de Compra y Precio Recomendado).
 - **Transporte:** viajes del camión. Calcula gasto de gasoil con desgaste, chofer, peajes y ganancia.
 
-Es una **página web en Cloudflare**: Pages (la página), D1 (la base de datos) y Access (el login:
-la persona pone su email y le llega un código). Se publica sola al subir a `main` (`PUBLICAR.md`).
+Es una **página web en Cloudflare**: Pages (la página) y D1 (la base de datos). Se entra tocando
+la tarjeta con tu nombre y poniendo un PIN de 4 números. Se publica sola al subir a `main` (`PUBLICAR.md`).
 La v1 era un artefacto de claude.ai; los datos tienen la misma forma (`MUDANZA.md`).
 
 ## Cómo hablar
@@ -29,8 +29,9 @@ La v1 era un artefacto de claude.ai; los datos tienen la misma forma (`MUDANZA.m
 4. **Una fórmula de plata no se cambia sin una prueba nueva** en `*.test.ts` con el antes y el después.
    Las pruebas de equivalencia con la v1 tienen que seguir pasando (salvo diferencias anotadas en los tests).
 5. **Nunca datos reales en el repo** (productores, precios, `mudanza/`, `importar.sql`).
-6. **El login no se afloja.** `servidor/acceso.ts` comprueba la firma de Access en cada pedido. No agregues
-   direcciones sin login ni atajos tipo "si no hay login, dejar pasar". `MODO=local` es solo para la computadora.
+6. **La entrada no se afloja.** Toda dirección de datos exige una sesión válida (`servidor/personas.ts`, tarjeta + PIN).
+   No agregues direcciones sin sesión ni atajos. El dueño eligió PIN corto a propósito (25/11/2026: "protección
+   contra curiosos"); lo que lo sostiene es la traba de 5 intentos: no la saques ni la aflojes.
 7. No edites `src/pruebas/original/` (copia textual de la v1, solo para pruebas).
 8. Al terminar una tanda: actualizá `PENDIENTES.md` y hacé commit con un mensaje claro en español.
 
@@ -42,7 +43,8 @@ La v1 era un artefacto de claude.ai; los datos tienen la misma forma (`MUDANZA.m
 - **Lo exacto se decide en el servidor.** El número de partida/viaje y el "no pisar cambios ajenos"
   (columna `rev`) se resuelven en una sola operación de la base (`servidor/almacen.ts`). La página
   siempre guarda por `src/comun/servidor.ts`; no inventes otra forma de escribir.
-- **"Quién" lo pone el servidor** según el login, aunque la página mande otra cosa.
+- **"Quién" lo pone el servidor** según la sesión (nombre de la tarjeta), aunque la página mande otra cosa.
+- **Lista vacía = cualquiera crea la primera persona.** Es para la instalación; con alguien en la lista ya no se puede.
 - **Las cuentas de plata usan `Decimal`**, nunca números comunes de JavaScript.
 - **Fechas en hora local** (`src/comun/fechas.ts`). Nunca `toISOString()` para una fecha que ve la gente.
 - **Espacios duros** (` `) entre número y `%` o `kg` en algunos textos: copian la v1. Las pruebas los comparan.
@@ -55,7 +57,7 @@ La v1 era un artefacto de claude.ai; los datos tienen la misma forma (`MUDANZA.m
 servidor/                el servidor (Cloudflare Functions); se prueba sin Cloudflare
   rutas.ts               direcciones /api/…
   almacen.ts             guardar y leer en la base; numeración y "no pisar"
-  acceso.ts              comprobar el login de Cloudflare Access
+  personas.ts            entrada: tarjetas, PIN, traba por intentos, sesiones (cookie 90 días)
   esquema.sql            las tablas
 functions/api/[[ruta]].ts  entrada que usa Cloudflare (solo llama a servidor/rutas.ts)
 src/                     la página
@@ -67,14 +69,14 @@ src/                     la página
   transporte/            misma estructura
   pruebas/original/      motor de la v1, para comparar (no se toca)
 scripts/importar.mjs     mudanza de datos desde la v1
-wrangler.toml            configuración de Cloudflare (base, variables del login)
+wrangler.toml            configuración de Cloudflare (la base)
 ```
 
 ## Comandos
 
 ```bash
 npm install          # la primera vez
-npm run local        # la app completa en la computadora (http://localhost:8788), sin login, base de prueba
+npm run local        # la app completa en la computadora (http://localhost:8788), base de prueba
 npm test             # pruebas
 npm run check        # pruebas + compilación: antes de cada subida
 ```
@@ -84,6 +86,6 @@ La base de prueba local vive en `.wrangler/estado/`; para empezar de cero, borr�
 
 ## Dónde está
 
-- App de la empresa: https://direccion-oficina.pages.dev (cuenta de Cloudflare de Mauricio; login: Zero Trust → equipo `direccionoficina`)
+- App de la empresa: https://direccion-oficina.pages.dev (cuenta de Cloudflare de Mauricio)
 - Código: https://github.com/agusfornas/direccion-oficina
 - La v1 (app vieja): https://claude.ai/artifact/EgmmBquYxip6WDy8Djxr8p — respaldo hasta terminar `MUDANZA.md`.
