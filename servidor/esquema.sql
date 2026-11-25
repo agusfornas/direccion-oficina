@@ -17,3 +17,21 @@ CREATE TABLE IF NOT EXISTS contadores (
   coleccion TEXT PRIMARY KEY,
   ultimo    INTEGER NOT NULL
 );
+
+-- Personas que pueden entrar (tarjeta con su nombre + PIN de 4 números). Ver servidor/personas.ts.
+CREATE TABLE IF NOT EXISTS personas (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre          TEXT NOT NULL,
+  pin_hash        TEXT,               -- huella del PIN (nunca el PIN); NULL = todavía no eligió
+  sal             TEXT,
+  intentos        INTEGER NOT NULL DEFAULT 0,   -- PIN equivocados seguidos
+  bloqueado_hasta INTEGER NOT NULL DEFAULT 0,   -- trabada hasta (milisegundos)
+  activa          INTEGER NOT NULL DEFAULT 1    -- 0 = se la quitó de la lista
+);
+
+-- Aparatos con la sesión iniciada (se guarda solo la huella de la cookie).
+CREATE TABLE IF NOT EXISTS sesiones (
+  token_hash TEXT PRIMARY KEY,
+  persona_id INTEGER NOT NULL,
+  vence      INTEGER NOT NULL
+);

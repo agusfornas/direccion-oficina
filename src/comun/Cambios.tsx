@@ -1,5 +1,5 @@
 // Tarjeta "Historial de cambios": quién creó, corrigió o eliminó un registro y cuándo.
-// "Quién" es el email con el que la persona entró (lo anota el servidor según el login).
+// "Quién" es el nombre de la tarjeta con la que la persona entró (lo anota el servidor).
 
 interface Cambio {
   accion: "crear" | "modificar" | "eliminar";
@@ -22,7 +22,7 @@ export function Cambios({ cambios, femenino = true }: { cambios: Cambio[]; femen
               {verbo(c.accion)} el {c.fecha.slice(8, 10)}/{c.fecha.slice(5, 7)}/{c.fecha.slice(0, 4)} a las {c.fecha.slice(11, 16)}
               <span className="quien">
                 {" · "}
-                {c.quien && c.quien.includes("@") ? c.quien : "sin registro de quién (app vieja)"}
+                {c.quien && !c.quien.startsWith("u_") ? c.quien : "sin registro de quién (app vieja)"}
               </span>
             </li>
           ))}

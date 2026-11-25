@@ -22,10 +22,13 @@ async function api<T>(ruta: string, metodo = "GET", cuerpo?: unknown): Promise<T
       body: cuerpo ? JSON.stringify(cuerpo) : undefined,
     });
   } catch {
-    // Si la sesión de Cloudflare Access venció, el pedido se corta así (no llega a la app).
-    throw new ErrorApp("No se pudo conectar. Revisá internet; si hace rato que tenés la página abierta, recargala para volver a entrar.");
+    throw new ErrorApp("No se pudo conectar. Revisá internet y probá de nuevo.");
   }
-  if (r.status === 401) throw new ErrorApp("Tu sesión venció. Recargá la página para volver a entrar.", {}, 401);
+  if (r.status === 401 && !ruta.startsWith("entrar")) {
+    // La sesión venció o se cerró: la app vuelve a la pantalla de tarjetas.
+    window.dispatchEvent(new Event("sesion-vencida"));
+    throw new ErrorApp("Tu sesión venció. Tocá tu tarjeta y poné tu PIN.", {}, 401);
+  }
   const datos = await r.json().catch(() => null);
   if (!r.ok) throw new ErrorApp((datos as { error?: string } | null)?.error ?? "Algo salió mal en el servidor. Probá de nuevo.", {}, r.status);
   return datos as T;
@@ -77,14 +80,33 @@ export async function guardarSinPisar<T extends { rev?: number; eliminada?: bool
   return api<T>(`c/${coleccion}/${id}`, "PUT", { documento: cambiar(actual), revEsperada: rev });
 }
 
+// ---------- Entrada (tarjetas + PIN) ----------
+
+export interface Persona {
+  id: number;
+  nombre: string;
+  tienePin: boolean;
+}
+export const personas = () => api<Persona[]>("personas");
+export const crearPersona = (nombre: string) => api<Persona>("personas", "POST", { nombre });
+export const quitarPersona = (id: number) => api(`personas/${id}/quitar`, "POST", {});
+export const borrarPin = (id: number) => api(`personas/${id}/borrar-pin`, "POST", {});
+export const salir = () => api("salir", "POST", {});
+/** Entra con el PIN; con `crear`, lo elige por primera vez. */
+export const entrar = (id: number, pin: string, crear = false) => api<{ nombre: string }>("entrar", "POST", { id, pin, crear });
+
 let yo: Promise<string | null> | null = null;
-/** El email de quien está usando la app (según el login de Cloudflare Access). */
+/** El nombre de quien está usando la app, o null si no entró. */
 export function quienSoy(): Promise<string | null> {
-  yo ??= api<{ email: string }>("yo")
-    .then((r) => r.email)
+  yo ??= api<{ nombre: string }>("yo")
+    .then((r) => r.nombre)
     .catch(() => null);
   return yo;
 }
+/** Olvidar quién es (después de entrar o salir). */
+export const olvidarQuienSoy = () => {
+  yo = null;
+};
 
 /** Descarga un archivo (los Excel). */
 export async function descargar(nombreArchivo: string, datos: ArrayBuffer | Uint8Array) {

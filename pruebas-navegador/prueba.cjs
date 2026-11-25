@@ -1,5 +1,6 @@
 // Prueba de punta a punta en un navegador real, contra la app corriendo en la computadora.
 // Uso: borrar la base de prueba (`rm -rf .wrangler/estado`), en una terminal `npm run local`,
+// (la prueba arranca con la base vacía: crea a "Mauricio" con PIN 1357)
 // y en otra `node pruebas-navegador/prueba.cjs`.
 // Necesita Playwright instalado (npm i -D playwright && npx playwright install chromium).
 // Deja capturas de pantalla en pruebas-navegador/capturas/ (no se suben al repo).
@@ -7,19 +8,45 @@ const { chromium } = require('playwright');
 const OUT = require('path').join(__dirname, 'capturas');
 require('fs').mkdirSync(OUT, { recursive: true });
 const URL = 'http://localhost:8788/';
-const api = (ruta, metodo = 'GET', cuerpo) => fetch(URL + 'api/' + ruta, { method: metodo, headers: { 'content-type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined }).then((r) => r.json());
+let page;
+// Usa la sesión del navegador (la cookie de la tarjeta).
+const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + ruta, { method: metodo, headers: { 'content-type': 'application/json' }, data: cuerpo ? JSON.stringify(cuerpo) : undefined }).then((r) => r.json());
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const errores = [];
   page.on('console', (m) => m.type() === 'error' && errores.push(m.text()));
   page.on('pageerror', (e) => errores.push(String(e)));
   const ok = (c, msg) => { if (!c) { console.log('FALLA:', msg); process.exitCode = 1; } else console.log('ok:', msg); };
   const texto = async () => ((await page.textContent('main')) || '').replace(/\u00a0/g, ' ');
+  // --- Entrada: primera persona, elegir PIN, PIN equivocado, salir y volver ---
   await page.goto(URL + '#inicio');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await page.waitForSelector('text=Primera vez');
+  await page.fill('#primer-nombre', 'Mauricio');
+  await page.click('button:has-text("Seguir")');
+  await page.click('button.tarjeta:has-text("Mauricio")');
+  await page.waitForSelector('text=elegí un PIN');
+  for (const d of '1357') await page.click(`.pin-teclas button:text-is("${d}")`);
+  await page.waitForSelector('text=Ponelo de nuevo');
+  for (const d of '1357') await page.click(`.pin-teclas button:text-is("${d}")`);
   await page.waitForSelector('text=¿Qué querés ver?');
+  ok((await texto()).includes('Entraste como Mauricio'), 'eligió PIN y entró como Mauricio');
+  await page.screenshot({ path: OUT + '/00-entrada-ok.png' });
+  await page.click('a:has-text("Salir")');
+  await page.click('button.tarjeta:has-text("Mauricio")');
+  await page.waitForSelector('text=Poné tu PIN');
+  await page.screenshot({ path: OUT + '/00-pin.png' });
+  for (const d of '0000') await page.click(`.pin-teclas button:text-is("${d}")`);
+  await page.waitForSelector('text=PIN incorrecto. Te quedan 4 intentos.');
+  ok(true, 'PIN equivocado avisa los intentos que quedan');
+  await page.keyboard.type('1357');
+  await page.waitForSelector('text=¿Qué querés ver?');
+  ok(true, 'entra con el PIN (también desde el teclado)');
+  await page.reload();
+  await page.waitForSelector('text=¿Qué querés ver?');
+  ok(true, 'el aparato recuerda la sesión al recargar');
   await page.screenshot({ path: OUT + '/01-inicio.png' });
 
   // --- Lavadero: nueva partida ---
@@ -44,7 +71,7 @@ const api = (ruta, metodo = 'GET', cuerpo) => fetch(URL + 'api/' + ruta, { metho
   ok((await texto()).includes('Partida 0001'), 'muestra número 0001');
   await page.click('summary:has-text("Historial de cambios")');
   await page.waitForTimeout(200);
-  ok((await texto()).includes('local@prueba'), 'historial de cambios muestra quién');
+  ok((await texto()).includes('· Mauricio'), 'historial de cambios muestra quién');
   await page.screenshot({ path: OUT + '/03-detalle.png', fullPage: true });
 
   // --- Corregir: 1.500 se entiende como mil quinientos ---

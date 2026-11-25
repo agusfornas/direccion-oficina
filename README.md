@@ -3,9 +3,9 @@
 App de la empresa para **Lavadero** (partidas de zanahoria: rendimiento y precio a pagar) y
 **Transporte** (viajes del camión: gastos y ganancia).
 
-Se entra con **un enlace**: la página pide el email, llega un código y listo. No hace falta
-cuenta de claude.ai ni contraseñas. Quién puede entrar se elige en Cloudflare Access.
-Funciona en Cloudflare (página, base de datos y login), dentro de los planes gratis.
+Se entra con **un enlace**: tocás la tarjeta con tu nombre y ponés tu PIN de 4 números (el
+aparato lo recuerda 90 días). No hace falta cuenta de claude.ai. Quién puede entrar se maneja
+desde la pantalla **Personas**. Funciona en Cloudflare (página y base de datos), en el plan gratis.
 
 ## Qué cambió de la v1 a la v2
 
@@ -20,8 +20,8 @@ Lo que cambió son arreglos:
 | En Transporte, un valor con coma y tres decimales (`1,250`) se guardaba bien pero se volvía a leer como 1250. | Lo guardado se lee siempre tal cual. |
 | Si dos personas guardaban a la vez, podían recibir el mismo número y una pisaba a la otra. | El número lo da la base de datos en una sola operación: siempre distintos. |
 | Si dos personas corregían la misma partida, ganaba la última sin aviso. | Avisa "Otra persona cambió esto" y no pisa. |
-| El historial de cambios guardaba la fecha pero no quién. | Guarda el email de quién creó, corrigió o eliminó, y se ve en cada partida y viaje. |
-| Para usarla hacía falta cuenta de claude.ai. | Se entra con un enlace y un código que llega por email. |
+| El historial de cambios guardaba la fecha pero no quién. | Guarda quién creó, corrigió o eliminó, y se ve en cada partida y viaje. |
+| Para usarla hacía falta cuenta de claude.ai. | Se entra con un enlace, tu tarjeta y un PIN. |
 | Un error al eliminar no se mostraba. | Se muestra. |
 | La app pesaba 1,7 MB al abrir (Excel y gráficos siempre cargados). | Pesa 283 KB; Excel y gráficos se bajan solo cuando se usan. |
 | Sin modo oscuro, etiquetas no vinculadas a los campos, historial solo con mouse. | Modo oscuro, campos accesibles para lectores de pantalla y teclado. |
@@ -33,7 +33,7 @@ Los datos guardados tienen **la misma forma** que en la v1, así que se mudan co
 | Archivo | Para qué |
 |---|---|
 | `CLAUDE.md` | Reglas y mapa del código. Lo lee Claude al empezar. |
-| `CLOUDFLARE.md` | Puesta en marcha en Cloudflare (una sola vez): base, página y login. |
+| `CLOUDFLARE.md` | Puesta en marcha en Cloudflare (una sola vez): base y página. |
 | `PUBLICAR.md` | Cómo publicar un cambio (se publica solo al llegar a `main`). |
 | `MUDANZA.md` | Pasar los datos de la app vieja a la nueva (una sola vez). |
 | `PENDIENTES.md` | Lista viva de lo que falta o se puede mejorar. |

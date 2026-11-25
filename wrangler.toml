@@ -9,8 +9,4 @@ binding = "DB"
 database_name = "direccion-oficina"
 database_id = "03f0511f-3234-4794-85d9-0e3e69d46606"
 
-# Cloudflare Access: el login. No son secretos: identifican la app de login.
-# Si se vacían, el servidor no deja entrar a nadie (es lo seguro).
-[vars]
-ACCESS_EQUIPO = "direccionoficina"
-ACCESS_AUD = "6feb0847031c3003afac82da0ef50fd96c3770263ee133ac8abd5391c42b5f2e"
+# La entrada a la app es con tarjeta + PIN de 4 números (servidor/personas.ts): no necesita configuración.
