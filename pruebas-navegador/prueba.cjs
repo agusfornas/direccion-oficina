@@ -76,6 +76,11 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   ok((await texto()).includes('Pagando hasta'), 'explicación del límite se abre');
   ok((await texto()).includes('= Queda para la zanahoria') && (await texto()).includes('Total vendido'), 'explicación del límite muestra la cuenta en números');
   await page.screenshot({ path: OUT + '/02b-cuenta-limite.png', fullPage: true });
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('0');
+  await page.waitForSelector('text=A negociar');
+  ok((await page.locator('.precio-card.blue').count()) === 0, 'sin precio pedido: no hay tarjeta de Precio Recomendado');
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
+  await page.waitForSelector('.precio-card.blue');
   await page.click('button:has-text("Guardar partida")');
   await page.waitForSelector('text=← Historial');
   ok(page.url().endsWith('#historial-1'), 'guardó como partida 1: ' + page.url());

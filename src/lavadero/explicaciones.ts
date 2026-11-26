@@ -19,7 +19,8 @@ export function sinPrecioPedido(r: ResultadoPartida): boolean {
 export function explicarLimite(r: ResultadoPartida, productor?: string): string[] {
   const limite = nul(r.precioLimite);
   const pedido = nul(r.precioSolicitado);
-  const recomendado = nul(r.recomendado.precio);
+  // Sin precio pedido no hay recomendado (las partidas viejas lo traen guardado: no se muestra).
+  const recomendado = pedido === null || pedido <= 0 ? null : nul(r.recomendado.precio);
   const rinde = nul(r.recomendado.factorRendimiento);
   const gananciaPct = Number(r.gananciaPct ?? 0);
   if (limite === null || r.margenOperativo === null || r.ingresos === null)
@@ -172,19 +173,14 @@ export function resumenPartida(r: ResultadoPartida) {
     },
   ];
   const limite = nul(r.precioLimite);
-  const rec = nul(r.recomendado.precio);
   const pedido = r.precioSolicitado === null || Number(r.precioSolicitado) <= 0 ? null : Number(r.precioSolicitado);
+  // Sin precio pedido no hay recomendado (las partidas viejas lo traen guardado: no se muestra).
+  const rec = pedido === null ? null : nul(r.recomendado.precio);
   const conclusion: string[] = [];
   if (limite !== null) {
     if (pedido === null || rec === null) {
-      // 26/11/2026: el número describe la partida, no lo que se le paga al productor
-      // (eso se negocia). Si coincide con el tope, va en una sola línea.
-      if (rec !== null && $(rec) === $(Math.max(limite, 0)))
-        conclusion.push(`Por cómo rindió, la partida da para ${$(rec)} por kilo. No pases de ahí.`);
-      else {
-        if (rec !== null) conclusion.push(`Por cómo rindió, la partida da para ${$(rec)} por kilo.`);
-        conclusion.push(`Sin precio pedido: no pases de ${$(Math.max(limite, 0))} por kilo.`);
-      }
+      if (rec !== null) conclusion.push(`Por cómo rindió, la partida da para ${$(rec)} por kilo.`);
+      conclusion.push(`Sin precio pedido: no pases de ${$(Math.max(limite, 0))} por kilo.`);
       conclusion.push(`Lo que arregles por debajo es ganancia extra, aparte de tu ${tuPct}\u00a0%.`);
     } else if (rec < limite - 0.005) {
       const ahorroKg = limite - rec;

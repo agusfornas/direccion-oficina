@@ -10,7 +10,7 @@ import type { ConfigLavadero, EntradaPartida, Producto, ResultadoPartida } from 
 /** Se guarda dentro de cada partida, para saber con qué fórmulas se calculó. */
 export const FORMULAS = {
   version:
-    "planilla-v1 / economia-v2 (ganancia) / recomendado-pedido-x-rendimiento-v10 (Elegida y Común con tope en su óptimo: ninguna compensa a la otra; sin pedido: límite × rendimiento)",
+    "planilla-v1 / economia-v2 (ganancia) / recomendado-pedido-x-rendimiento-v11 (Elegida y Común con tope en su óptimo: ninguna compensa a la otra; sin pedido: no hay recomendado, se negocia por debajo del límite)",
   descripciones: {
     cubitosPorTaco: "(Cubitos × 1 + 20×1 × 2 + Moños (Ext) × 2) / Tacos",
     generalPorTaco: "(Cubitos × 0,5 + 20×1 + Moños (Ext) + Moños + Moñitos × 0,5 + Industrial) / Tacos",
@@ -30,7 +30,7 @@ export const FORMULAS = {
     valorNetoOptimo:
       "Kg Elegida óptimos × valor neto por kg de Elegida + Kg Común óptimos × valor neto por kg de Común (según la mezcla de valuación)",
     precioRecomendado:
-      "mín( Precio pedido × mín(Valor neto real / Valor neto óptimo, 1) , Precio Límite de Compra ). Se le paga al productor el mismo % de lo que pide en que rindió respecto del óptimo; si eso supera lo que se puede pagar según las ventas y la ganancia del galpón, se recomienda el límite y se avisa.",
+      "mín( Precio pedido × mín(Valor neto real / Valor neto óptimo, 1) , Precio Límite de Compra ). Se le paga al productor el mismo % de lo que pide en que rindió respecto del óptimo; si eso supera lo que se puede pagar según las ventas y la ganancia del galpón, se recomienda el límite y se avisa. Sin precio pedido no hay recomendado: se negocia por debajo del Precio Límite.",
   },
 };
 
@@ -368,12 +368,12 @@ export function precioRecomendado(
     };
 
   if (solicitado === null || solicitado.lte(0)) {
-    // Sin precio pedido: límite × rendimiento.
+    // Sin precio pedido no hay recomendado (26/11/2026; antes era límite × rendimiento): se
+    // negocia por debajo del Precio Límite. El rendimiento se sigue calculando, como dato.
     const base = Decimal.max(precioLimite, 0);
-    const p = base.times(factorAplicado);
     return {
-      vnr, vno, factor, factorAplicado, precioPorRendimiento: p, descuento: base.minus(p), limiteOptimo,
-      precioBase: base, precio: p, limitadoPor: null, comunExcedenteKg, elegidaExcedenteKg, motivo: null, sinPedido: true,
+      vnr, vno, factor, factorAplicado, precioPorRendimiento: null, descuento: null, limiteOptimo,
+      precioBase: base, precio: null, limitadoPor: null, comunExcedenteKg, elegidaExcedenteKg, motivo: null, sinPedido: true,
     };
   }
   const porRendimiento = solicitado.times(factorAplicado);

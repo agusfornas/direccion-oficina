@@ -545,6 +545,9 @@ textarea {
   gap: 14px;
   display: grid;
 }
+.precios.solo {
+  grid-template-columns: minmax(0, 1fr);
+}
 .precio-card.claro {
   color: var(--ink);
   border: 2px solid var(--blue);
