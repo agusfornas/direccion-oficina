@@ -158,6 +158,23 @@ function partidaValida(a: ReturnType<typeof azar>): EntradaPartida {
   return e;
 }
 
+/**
+ * Diferencias anotadas con la v1 en la conclusión del resumen (26/11/2026, pedido del dueño):
+ * "a este productor le pagás $ X" → "la partida da para $ X" (el precio se negocia);
+ * "Como le pagás" → "Si le pagás"; sin precio pedido, si el número es el mismo que el tope,
+ * las dos líneas se juntan en una. Esto pasa el texto de la v1 a como queda ahora.
+ */
+function resumenComoAhora(v: ReturnType<typeof resumenPartida>) {
+  if (!v) return v;
+  const c = v.conclusion.map((x: string) =>
+    x.replace("Por cómo rindió, a este productor le pagás ", "Por cómo rindió, la partida da para ").replace(/^Como le pagás /, "Si le pagás "),
+  );
+  const m0 = c[0]?.match(/^Por cómo rindió, la partida da para (.+) por kilo\.$/);
+  const m1 = c[1]?.match(/^Sin precio pedido: no pases de (.+) por kilo\.$/);
+  if (m0 && m1 && m0[1] === m1[1]) c.splice(0, 2, `Por cómo rindió, la partida da para ${m0[1]} por kilo. No pases de ahí.`);
+  return { ...v, conclusion: c };
+}
+
 describe("Lavadero: explicaciones y formatos iguales a la v1", () => {
   it("partidas válidas al azar", () => {
     let comparadas = 0;
@@ -171,7 +188,7 @@ describe("Lavadero: explicaciones y formatos iguales a la v1", () => {
       comparadas++;
       expect(explicarLimite(r, e.productor), `límite #${i}`).toEqual(In(r, e.productor));
       expect(explicarRecomendado(r), `recomendado #${i}`).toEqual(Rn(r));
-      expect(resumenPartida(r), `resumen #${i}`).toEqual(Vn(r));
+      expect(resumenPartida(r), `resumen #${i}`).toEqual(resumenComoAhora(Vn(r)));
       for (const v of [r.precioLimite, r.kgBruto, r.pctElegida, r.difSolicitadoLimite]) {
         expect(plata(v)).toBe(on(v));
         expect(numeroFijo(v)).toBe(sn(v));
@@ -317,5 +334,31 @@ describe("Lavadero: peso por taco con punto decimal", () => {
     expect(calcularPartida(e, CONFIG_INICIAL).kgBruto).toBe("3125");
     expect(leerPesoEscrito("32.490")!.toString()).toBe("32.49");
     expect(calcularTacoOptimo(CONFIG_INICIAL, "32.490", "")!.kgTaco.toString()).toBe("32.49");
+  });
+});
+
+describe("Lavadero: conclusión del resumen (26/11/2026)", () => {
+  const partida = (cubitos: string, monitos: string) =>
+    calcularPartida(
+      limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: "",
+        bolsas: { CUBITOS: cubitos, VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: monitos, INDUSTRIAL: "" } }),
+      CONFIG_INICIAL,
+    );
+  it("sin precio pedido y rinde el óptimo: una sola línea, sin 'le pagás'", () => {
+    const r = partida("210", "50");
+    const c = resumenPartida(r)!.conclusion;
+    expect(plata(r.recomendado.precio)).toBe(plata(r.precioLimite));
+    expect(c).toEqual([
+      `Por cómo rindió, la partida da para ${plata(r.precioLimite)} por kilo. No pases de ahí.`,
+      "Lo que arregles por debajo es ganancia extra, aparte de tu 10\u00a0%.",
+    ]);
+  });
+  it("sin precio pedido y rinde menos: dos líneas con números distintos", () => {
+    const r = partida("80", "40");
+    expect(resumenPartida(r)!.conclusion).toEqual([
+      "Por cómo rindió, la partida da para $\u00a017,71 por kilo.",
+      "Sin precio pedido: no pases de $\u00a040,01 por kilo.",
+      "Lo que arregles por debajo es ganancia extra, aparte de tu 10\u00a0%.",
+    ]);
   });
 });

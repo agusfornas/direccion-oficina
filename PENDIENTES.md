@@ -28,6 +28,10 @@ Lista viva. Se tacha cuando está hecho y probado.
   25/11/2026 a pedido). Mientras el repo sea público, cualquiera los puede leer.
 - [x] Moños cargado a mano en Lavadero → Configuración de la app (25/11/2026).
 
+## Textos
+- [x] Conclusión del resumen: "la partida da para $ X" en lugar de "a este productor le pagás $ X"
+  (el precio se negocia); "Si le pagás" en lugar de "Como le pagás"; líneas repetidas juntas (26/11/2026).
+
 ## Para decidir (no se tocó para no cambiar resultados)
 - [ ] **Precio pedido obligatorio.** El formulario exige "Precio solicitado o de referencia", pero el motor
   tiene preparado el caso "sin precio pedido" (paga límite × rendimiento) y las pantallas lo explican
