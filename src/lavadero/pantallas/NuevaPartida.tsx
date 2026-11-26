@@ -230,7 +230,7 @@ export function NuevaPartida({ editarId }: { editarId?: number }) {
             <div className="grid mt">
               <Campo
                 label="Precio solicitado o de referencia por kg"
-                ayuda="Si no pide precio, poné la referencia de otros productores."
+                ayuda="Opcional. Si no pide precio, dejalo vacío: queda «A negociar» por debajo del tope."
                 error={marcados.precioSolicitado}
               >
                 {(id) => (

@@ -141,6 +141,21 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.waitForSelector('text=5 partidas');
   ok(true, 'eliminar deja 5 partidas');
 
+  // --- Partida sin precio pedido: se puede guardar ---
+  await page.goto(URL + '#nueva');
+  await page.waitForSelector('text=Datos generales');
+  await page.getByLabel('Productor').fill('Sin Precio');
+  await page.getByLabel('Cantidad de tacos').fill('50');
+  await page.getByLabel('Bolsas de Cubitos').fill('80');
+  await page.getByLabel('Bolsas de Moñitos').fill('20');
+  await page.waitForSelector('text=A negociar');
+  await page.click('button:has-text("Guardar partida")');
+  await page.waitForSelector('text=← Historial');
+  ok((await texto()).includes('A negociar'), 'partida sin precio pedido guardada: muestra "A negociar"');
+  await page.click('button:has-text("Eliminar")');
+  await page.click('button:has-text("Sí, eliminar")');
+  await page.waitForSelector('text=5 partidas');
+
   // --- Configuración: nueva versión ---
   await page.goto(URL + '#configuracion');
   await page.waitForSelector('text=Versión vigente: 1');

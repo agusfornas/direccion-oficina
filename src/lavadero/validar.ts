@@ -24,8 +24,10 @@ export function validarPartida(e: EntradaPartida): Errores {
       if (!positivo(g.pesoKg)) t[`grupo${i}peso`] = "Peso mayor a 0.";
     });
   }
-  if (!positivo(e.precioSolicitado))
-    t.precioSolicitado = "Ingresá el precio que pide el productor o el de referencia.";
+  // Opcional desde el 26/11/2026: vacío o 0 = sin precio pedido ("A negociar" por debajo del tope).
+  const pedido = leerNumero(e.precioSolicitado);
+  if (!esNumeroOVacio(e.precioSolicitado) || (pedido !== null && pedido.lt(0)))
+    t.precioSolicitado = "Precio inválido. Si no pide precio, dejalo vacío.";
   if (!esNumeroOVacio(e.precioPagado)) t.precioPagado = "Número inválido.";
   for (const [id, v] of Object.entries(e.bolsas)) {
     const n = leerNumero(v);
