@@ -326,7 +326,7 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
                       ? "Rindió bien, pero tus ventas no cubren lo que pide. Es tu tope: negociá por debajo."
                       : "Rindió el óptimo o más."
                     : rec.limitadoPor === "LIMITE"
-                      ? "Rindió para más de lo que podés pagar. Es tu tope: negociá por debajo."
+                      ? "Lo que pide pasa tu tope. Es lo máximo que podés pagar: negociá por debajo."
                       : "Precio pedido ajustado por rendimiento."
                   : rindioOptimo
                     ? rec.limitadoPor === "SOLICITADO"
