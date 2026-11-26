@@ -58,6 +58,7 @@ export function DetallePartida({ id }: { id: number }) {
   const bajoLimite = rec.precio !== null && r.precioLimite !== null && Number(rec.precio) < Number(r.precioLimite) - 0.005;
   const totalBolsas = r.productos.reduce((s, x) => s + Number(x.bolsas), 0);
   const sinPedido = sinPrecioPedido(r);
+  const pideDeMas = !sinPedido && r.precioSolicitado !== null && r.precioLimite !== null && Number(r.precioSolicitado) > Number(r.precioLimite) + 0.005;
   const exportar = async () => {
     try {
       await descargar(`partida-${p.numero}.xlsx`, await excelPartida(p));
@@ -107,7 +108,13 @@ export function DetallePartida({ id }: { id: number }) {
           <Kpi
             t="Precio límite"
             v={sinPedido ? "A negociar" : bajoLimite ? "No aplica" : plata(r.precioLimite)}
-            s={sinPedido ? `No pases de ${plata(r.precioLimite)}.` : bajoLimite ? `Te deja hasta ${plata(r.precioLimite)} por kilo.` : undefined}
+            s={
+              sinPedido
+                ? `No pases de ${plata(r.precioLimite)}.`
+                : bajoLimite
+                  ? `${pideDeMas ? `No te alcanza para los ${plata(r.precioSolicitado)} que pide. ` : ""}Te deja hasta ${plata(r.precioLimite)} por kilo.`
+                  : undefined
+            }
           />
           <Kpi t="Precio recomendado" v={sinPedido ? "—" : plata(rec.precio)} s={sinPedido ? "Sin precio pedido: se negocia." : undefined} accent />
         </div>

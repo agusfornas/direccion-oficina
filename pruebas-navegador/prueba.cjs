@@ -81,6 +81,27 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   ok((await page.locator('.precio-card.blue').count()) === 0, 'sin precio pedido: no hay tarjeta de Precio Recomendado');
   await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
   await page.waitForSelector('.precio-card.blue');
+  // Aviso amarillo cuando lo que pide (ajustado por rendimiento) pasa el tope.
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('100000');
+  await page.waitForSelector('text=podés pagar hasta');
+  ok(/Pide \$ 100\.000,00\. (Por rendimiento serían \$ [\d.,]+, |Rindió el óptimo, )pero por tus ventas y costos, guardando tu 10 %, podés pagar hasta \$ [\d.,]+ por kilo\./.test(await texto()),
+    'aviso: pide, por rendimiento y hasta cuánto podés pagar');
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
+  await page.waitForTimeout(200);
+  // "No aplica": si lo que pide pasa el tope, avisa que no alcanza; si no, no.
+  {
+    const tx = await texto();
+    const m = tx.match(/Te deja hasta \$ ([\d.]+,\d\d) por kilo/);
+    if (tx.includes('No aplica') && m) {
+      const tope = Number(m[1].replace(/\./g, '').replace(',', '.'));
+      ok(tx.includes('No te alcanza para los $ 300,00 que pide.') === 300 > tope, `"No aplica" avisa solo si pide más que el tope (${tope})`);
+    } else ok(true, '"No aplica" no se muestra en esta partida');
+  }
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('50');
+  await page.waitForTimeout(200);
+  ok(!(await texto()).includes('No te alcanza para los'), 'pide menos que el tope: sin aviso de que no alcanza');
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
+  await page.waitForTimeout(200);
   await page.click('button:has-text("Guardar partida")');
   await page.waitForSelector('text=← Historial');
   ok(page.url().endsWith('#historial-1'), 'guardó como partida 1: ' + page.url());
