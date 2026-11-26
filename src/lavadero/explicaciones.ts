@@ -161,15 +161,21 @@ export function resumenPartida(r: ResultadoPartida) {
   const conclusion: string[] = [];
   if (limite !== null) {
     if (pedido === null || rec === null) {
-      if (rec !== null) conclusion.push(`Por cómo rindió, a este productor le pagás ${$(rec)} por kilo.`);
-      conclusion.push(`Sin precio pedido: no pases de ${$(Math.max(limite, 0))} por kilo.`);
+      // 26/11/2026: el número describe la partida, no lo que se le paga al productor
+      // (eso se negocia). Si coincide con el tope, va en una sola línea.
+      if (rec !== null && $(rec) === $(Math.max(limite, 0)))
+        conclusion.push(`Por cómo rindió, la partida da para ${$(rec)} por kilo. No pases de ahí.`);
+      else {
+        if (rec !== null) conclusion.push(`Por cómo rindió, la partida da para ${$(rec)} por kilo.`);
+        conclusion.push(`Sin precio pedido: no pases de ${$(Math.max(limite, 0))} por kilo.`);
+      }
       conclusion.push(`Lo que arregles por debajo es ganancia extra, aparte de tu ${tuPct}\u00a0%.`);
     } else if (rec < limite - 0.005) {
       const ahorroKg = limite - rec;
       const total = Math.round((ahorroKg * kgBruto) / 1000) * 1000;
-      conclusion.push(`Por cómo rindió, a este productor le pagás ${$(rec)} por kilo.`);
+      conclusion.push(`Por cómo rindió, la partida da para ${$(rec)} por kilo.`);
       conclusion.push(`Con lo que vendés, esta zanahoria vale hasta ${$(limite)} por kilo para vos, guardando tu ${tuPct}\u00a0%.`);
-      conclusion.push(`Como le pagás ${$(rec)}, te ahorrás **${$(ahorroKg)} por cada kilo**.`);
+      conclusion.push(`Si le pagás ${$(rec)}, te ahorrás **${$(ahorroKg)} por cada kilo**.`);
       conclusion.push(`Cada taco tiene ${pesoTxt} kilos, así que ganás ${$(ahorroKg * pesoTaco)} de más por taco.`);
       conclusion.push(`En toda la partida (${numero(r.tacos, 0)} tacos) son unos ${plata(String(total), 0)} de ganancia extra, aparte de tu ${tuPct}\u00a0%.`);
     } else {
