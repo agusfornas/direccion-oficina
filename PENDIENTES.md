@@ -35,11 +35,13 @@ Lista viva. Se tacha cuando está hecho y probado.
 ## Fórmulas
 - [x] Rendimiento: ninguna calidad compensa a la otra. Elegida y Común cuentan solo hasta su óptimo
   (antes la Elegida de más sumaba). Fórmulas v10. Partidas guardadas antes no cambian (26/11/2026).
+- [x] Sin precio pedido no hay Precio Recomendado (antes: límite × rendimiento). El descuento por
+  rendimiento es solo cuando el productor pide un precio. Fórmulas v11 (26/11/2026).
 
 ## Para decidir (no se tocó para no cambiar resultados)
 - [ ] **Precio pedido obligatorio.** El formulario exige "Precio solicitado o de referencia", pero el motor
-  tiene preparado el caso "sin precio pedido" (paga límite × rendimiento) y las pantallas lo explican
-  ("A negociar"). Hoy nunca se usa. ¿Se permite dejarlo vacío? Es cambiar una validación en
+  tiene preparado el caso "sin precio pedido" (desde v11: sin recomendado, "A negociar" por debajo del
+  límite) y las pantallas lo explican. Se ve en vivo con 0, pero no se puede guardar. ¿Se permite dejarlo vacío? Es cambiar una validación en
   `src/lavadero/validar.ts`.
 - [ ] **Precio pagado.** Se guarda vacío siempre (el formulario no lo pide), así que las estadísticas de
   "precio pagado" y "resultado estimado" no tienen datos. ¿Se agrega el campo?

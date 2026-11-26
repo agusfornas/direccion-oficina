@@ -4,6 +4,7 @@ import { encabezado, nuevoLibro, PESOS } from "../comun/excel";
 import { agrupar, fechaCorta, mesDe, nombreMes } from "../comun/fechas";
 import { paraExcel as n } from "../comun/numeros";
 import { resumen, type FilaEstadistica } from "./estadisticas";
+import { sinPrecioPedido } from "./explicaciones";
 import { FORMULAS } from "./calculo";
 import type { Partida } from "./tipos";
 
@@ -54,7 +55,7 @@ export async function excelPartidas(partidas: Partida[]) {
       cos: n(r.costosOperativos),
       sol: n(r.precioSolicitado),
       lim: n(r.precioLimite),
-      rec: n(r.recomendado.precio),
+      rec: sinPrecioPedido(r) ? null : n(r.recomendado.precio),
       cv: p.configVersion,
     });
   }
@@ -88,7 +89,7 @@ export async function excelPartida(p: Partida) {
   titulo("Precios");
   fila("Precio solicitado ($/kg)", n(r.precioSolicitado), PESOS);
   fila("Precio Límite de Compra ($/kg)", n(r.precioLimite), PESOS);
-  fila("Precio Recomendado ($/kg)", n(r.recomendado.precio), PESOS);
+  fila("Precio Recomendado ($/kg)", sinPrecioPedido(r) ? null : n(r.recomendado.precio), PESOS);
   h.addRow([]);
   titulo("Planilla de rendición");
   fila("Cubitos por taco", n(r.cubitosPorTaco), "0.0000");

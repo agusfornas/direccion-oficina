@@ -109,7 +109,7 @@ export function DetallePartida({ id }: { id: number }) {
             v={sinPedido ? "A negociar" : bajoLimite ? "No aplica" : plata(r.precioLimite)}
             s={sinPedido ? `No pases de ${plata(r.precioLimite)}.` : bajoLimite ? `Te deja hasta ${plata(r.precioLimite)} por kilo.` : undefined}
           />
-          <Kpi t="Precio recomendado" v={plata(rec.precio)} accent />
+          <Kpi t="Precio recomendado" v={sinPedido ? "—" : plata(rec.precio)} s={sinPedido ? "Sin precio pedido: se negocia." : undefined} accent />
         </div>
         {rec.factorRendimiento !== null && (
           <div className={`rinde mt ${Number(rec.factorRendimiento) >= 1 ? "bien" : Number(rec.factorRendimiento) >= 0.9 ? "medio" : "bajo"}`}>

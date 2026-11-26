@@ -77,6 +77,8 @@ function partidaAlAzar(a: ReturnType<typeof azar>): EntradaPartida {
  * compensaba la Común que faltaba). Cuando NO sobra Elegida, todo tiene que dar igual que la v1.
  * Cuando sobra, todo lo demás igual, y el recomendado se controla con la cuenta nueva:
  *   valor real = valor real de la v1 − neto de la Elegida × (1 − kg Elegida óptimos / kg Elegida reales)
+ * Otra diferencia (26/11/2026): sin precio pedido ya no hay recomendado (la v1 daba límite ×
+ * rendimiento). Acá no aparece porque el formulario exige precio; la prueban los casos fijos de abajo.
  */
 function compararConV1(r: ResultadoPartida, v1: ResultadoPartida, msg: string) {
   const sacar = (x: ResultadoPartida) => {
@@ -421,19 +423,19 @@ describe("Lavadero: conclusión del resumen (26/11/2026)", () => {
         bolsas: { CUBITOS: cubitos, VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: monitos, INDUSTRIAL: "" } }),
       CONFIG_INICIAL,
     );
-  it("sin precio pedido y rinde el óptimo: una sola línea, sin 'le pagás'", () => {
+  // 26/11/2026: sin precio pedido ya no hay recomendado (antes: límite × rendimiento, y la
+  // conclusión decía "la partida da para $ X"). Queda solo el tope.
+  it("sin precio pedido y rinde el óptimo: solo el tope", () => {
     const r = partida("210", "50");
-    const c = resumenPartida(r)!.conclusion;
-    expect(plata(r.recomendado.precio)).toBe(plata(r.precioLimite));
-    expect(c).toEqual([
-      `Por cómo rindió, la partida da para ${plata(r.precioLimite)} por kilo. No pases de ahí.`,
+    expect(r.recomendado.precio).toBeNull();
+    expect(resumenPartida(r)!.conclusion).toEqual([
+      `Sin precio pedido: no pases de ${plata(r.precioLimite)} por kilo.`,
       "Lo que arregles por debajo es ganancia extra, aparte de tu 10\u00a0%.",
     ]);
   });
-  it("sin precio pedido y rinde menos: dos líneas con números distintos", () => {
+  it("sin precio pedido y rinde menos: solo el tope (antes también 'la partida da para $ 17,71')", () => {
     const r = partida("80", "40");
     expect(resumenPartida(r)!.conclusion).toEqual([
-      "Por cómo rindió, la partida da para $\u00a017,71 por kilo.",
       "Sin precio pedido: no pases de $\u00a040,01 por kilo.",
       "Lo que arregles por debajo es ganancia extra, aparte de tu 10\u00a0%.",
     ]);
@@ -486,5 +488,42 @@ describe("Lavadero: ninguna calidad compensa a la otra (26/11/2026)", () => {
   it("partidas guardadas antes del cambio: la fila de Elegida no dice 'cuenta solo hasta'", () => {
     const fila = resumenPartida(antes)!.filas.find((f) => f.nombre === "Elegida")!;
     expect(fila.diferencia).toBe("20\u00a0% más");
+  });
+});
+
+describe("Lavadero: el descuento por rendimiento es solo con precio pedido (26/11/2026)", () => {
+  // 100 tacos de 32 kg, configuración inicial, 190 bolsas de Cubitos y 50 de Moñitos:
+  // le falta un poco de Elegida (rinde menos del óptimo).
+  const con = (pide: string) =>
+    limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: pide,
+      bolsas: { CUBITOS: "190", VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: "50", INDUSTRIAL: "" } });
+  it("sin precio pedido: antes límite × rendimiento, ahora no hay recomendado", () => {
+    const antes = Nt(con(""), CONFIG_INICIAL) as ResultadoPartida;
+    const ahora = calcularPartida(con(""), CONFIG_INICIAL);
+    const factor = new Decimal(ahora.recomendado.factorRendimiento!);
+    expect(factor.lt(1)).toBe(true);
+    expect(antes.recomendado.precio).toBe(Decimal.max(new Decimal(antes.precioLimite!), 0).times(factor).toString());
+    expect(ahora.recomendado.precio).toBeNull();
+    expect(ahora.recomendado.precioPorRendimiento).toBeNull();
+    expect(ahora.difRecomendadoLimite).toBeNull();
+    // El rendimiento y el tope se siguen calculando igual.
+    expect(ahora.recomendado.factorRendimiento).toBe(antes.recomendado.factorRendimiento);
+    expect(ahora.precioLimite).toBe(antes.precioLimite);
+    expect(explicarLimite(ahora).some((t) => t.includes("(recomendado)"))).toBe(false);
+  });
+  it("con precio pedido: lo que pide × rendimiento (pide 200, rinde menos → menos de 200)", () => {
+    const r = calcularPartida(con("200"), CONFIG_INICIAL);
+    const factor = new Decimal(r.recomendado.factorRendimiento!);
+    expect(factor.lt(1)).toBe(true);
+    expect(new Decimal(r.precioLimite!).gt(200)).toBe(true);
+    expect(r.recomendado.precio).toBe(new Decimal(200).times(factor).toString());
+    // Igual que antes del cambio.
+    expect(r.recomendado.precio).toBe((Nt(con("200"), CONFIG_INICIAL) as ResultadoPartida).recomendado.precio);
+  });
+  it("partidas guardadas antes, sin precio pedido: el número viejo no se muestra en los textos", () => {
+    const vieja = Nt(con(""), CONFIG_INICIAL) as ResultadoPartida;
+    expect(vieja.recomendado.precio).not.toBeNull();
+    expect(resumenPartida(vieja)!.conclusion[0]).toMatch(/^Sin precio pedido: no pases de/);
+    expect(explicarLimite(vieja).some((t) => t.includes("(recomendado)"))).toBe(false);
   });
 });

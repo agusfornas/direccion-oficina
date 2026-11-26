@@ -283,7 +283,7 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
 
   return (
     <div>
-      <div className="precios">
+      <div className={`precios ${sinPedido ? "solo" : ""}`}>
         <div className="precio-card clic" {...propsLimite}>
           <div className="t">Precio Límite de Compra</div>
           {sinPedido ? (
@@ -306,30 +306,33 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
           )}
           <Explicacion abierta={limiteAbierto} textos={explicarLimite(r, productor)} extra={<CuentaLimite r={r} />} />
         </div>
-        <div className="precio-card blue clic" {...propsRec}>
-          <div className="t">Precio Recomendado</div>
-          {porKg(rec.precio)}
-          <div className="d">
-            {sinPedido
-              ? rindioOptimo
-                ? "Rindió el óptimo o más: tu tope."
-                : `Tu tope × lo que rindió (${porcentaje(String(Number(rec.factorAplicado) * 100), 0)}).`
-              : rec.base === "PEDIDO"
+        {/* Sin precio pedido no hay recomendado: se negocia por debajo del Límite (26/11/2026). */}
+        {!sinPedido && (
+          <div className="precio-card blue clic" {...propsRec}>
+            <div className="t">Precio Recomendado</div>
+            {porKg(rec.precio)}
+            <div className="d">
+              {sinPedido
                 ? rindioOptimo
-                  ? rec.limitadoPor === "LIMITE"
-                    ? "Rindió bien, pero tus ventas no cubren lo que pide. Es tu tope: negociá por debajo."
-                    : "Rindió el óptimo o más."
-                  : rec.limitadoPor === "LIMITE"
-                    ? "Rindió para más de lo que podés pagar. Es tu tope: negociá por debajo."
-                    : "Precio pedido ajustado por rendimiento."
-                : rindioOptimo
-                  ? rec.limitadoPor === "SOLICITADO"
-                    ? "Rindió igual o más que el óptimo."
-                    : "Rindió bien, pero con tus precios de venta no alcanza para pagarle lo que pide."
-                  : "Lo que conviene pagar según el rendimiento real de la mercadería. Nunca supera el límite."}
+                  ? "Rindió el óptimo o más: tu tope."
+                  : `Tu tope × lo que rindió (${porcentaje(String(Number(rec.factorAplicado) * 100), 0)}).`
+                : rec.base === "PEDIDO"
+                  ? rindioOptimo
+                    ? rec.limitadoPor === "LIMITE"
+                      ? "Rindió bien, pero tus ventas no cubren lo que pide. Es tu tope: negociá por debajo."
+                      : "Rindió el óptimo o más."
+                    : rec.limitadoPor === "LIMITE"
+                      ? "Rindió para más de lo que podés pagar. Es tu tope: negociá por debajo."
+                      : "Precio pedido ajustado por rendimiento."
+                  : rindioOptimo
+                    ? rec.limitadoPor === "SOLICITADO"
+                      ? "Rindió igual o más que el óptimo."
+                      : "Rindió bien, pero con tus precios de venta no alcanza para pagarle lo que pide."
+                    : "Lo que conviene pagar según el rendimiento real de la mercadería. Nunca supera el límite."}
+            </div>
+            <Explicacion abierta={recAbierto} textos={explicarRecomendado(r)} />
           </div>
-          <Explicacion abierta={recAbierto} textos={explicarRecomendado(r)} />
-        </div>
+        )}
       </div>
 
       {rec.factorRendimiento !== null && hayProduccion && (
