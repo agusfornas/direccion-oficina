@@ -37,7 +37,8 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [x] "No aplica" con aviso cuando el productor pide más que el tope: "No te alcanza para los $ X que pide." (26/11/2026).
 - [x] Aviso amarillo: "Pide $ X. Por rendimiento serían $ Y, pero por tus ventas y costos, guardando tu 10 %,
   podés pagar hasta $ Z por kilo." (antes "Rindió para $ Y el kilo", parecía lo que vale la partida) (26/11/2026).
-- [x] Tarjeta del Recomendado: "Lo que pide pasa tu tope. Es lo máximo que podés pagar: negociá por debajo." (26/11/2026).
+- [x] Cuando lo que pide × rendimiento pasa el tope, el Recomendado dice "A negociar. Pide $ X. No pases de $ Y."
+  (antes repetía el número del Límite) (26/11/2026).
 
 ## Fórmulas
 - [x] Rendimiento: ninguna calidad compensa a la otra. Elegida y Común cuentan solo hasta su óptimo

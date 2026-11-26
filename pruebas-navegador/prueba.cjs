@@ -86,6 +86,9 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.waitForSelector('text=podés pagar hasta');
   ok(/Pide \$ 100\.000,00\. (Por rendimiento serían \$ [\d.,]+, |Rindió el óptimo, )pero por tus ventas y costos, guardando tu 10 %, podés pagar hasta \$ [\d.,]+ por kilo\./.test(await texto()),
     'aviso: pide, por rendimiento y hasta cuánto podés pagar');
+  ok((await page.textContent('.precio-card.blue')).replace(/\u00a0/g, ' ').includes('A negociar') &&
+     /Pide \$ 100\.000,00\. No pases de \$ [\d.,]+\./.test((await page.textContent('.precio-card.blue')).replace(/\u00a0/g, ' ')),
+    'pide más que el tope: el Recomendado dice "A negociar" (sin repetir el número)');
   await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
   await page.waitForTimeout(200);
   // "No aplica": si lo que pide pasa el tope, avisa que no alcanza; si no, no.

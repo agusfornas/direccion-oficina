@@ -58,6 +58,7 @@ export function DetallePartida({ id }: { id: number }) {
   const bajoLimite = rec.precio !== null && r.precioLimite !== null && Number(rec.precio) < Number(r.precioLimite) - 0.005;
   const totalBolsas = r.productos.reduce((s, x) => s + Number(x.bolsas), 0);
   const sinPedido = sinPrecioPedido(r);
+  const pideSobreTope = rec.base === "PEDIDO" && rec.limitadoPor === "LIMITE";
   const pideDeMas = !sinPedido && r.precioSolicitado !== null && r.precioLimite !== null && Number(r.precioSolicitado) > Number(r.precioLimite) + 0.005;
   const exportar = async () => {
     try {
@@ -116,7 +117,12 @@ export function DetallePartida({ id }: { id: number }) {
                   : undefined
             }
           />
-          <Kpi t="Precio recomendado" v={sinPedido ? "—" : plata(rec.precio)} s={sinPedido ? "Sin precio pedido: se negocia." : undefined} accent />
+          <Kpi
+            t="Precio recomendado"
+            v={sinPedido ? "—" : pideSobreTope ? "A negociar" : plata(rec.precio)}
+            s={sinPedido ? "Sin precio pedido: se negocia." : pideSobreTope ? `Pide ${plata(r.precioSolicitado)}. No pases de ${plata(r.precioLimite)}.` : undefined}
+            accent
+          />
         </div>
         {rec.factorRendimiento !== null && (
           <div className={`rinde mt ${Number(rec.factorRendimiento) >= 1 ? "bien" : Number(rec.factorRendimiento) >= 0.9 ? "medio" : "bajo"}`}>
