@@ -1,7 +1,7 @@
 // Validaciones y limpieza de lo que se carga en Lavadero (igual que la v1).
 // Orden siempre: primero limpiar (interpreta lo que escribió la persona), después validar
 // y calcular sobre lo limpio. Ver la explicación en comun/numeros.ts.
-import { Decimal, esNumeroOVacio, leerNumero, normalizarNumero, numeroOCero } from "../comun/numeros";
+import { Decimal, esNumeroOVacio, leerNumero, normalizarNumero, normalizarPeso, numeroOCero } from "../comun/numeros";
 import type { ConfigLavadero, EntradaPartida } from "./tipos";
 
 export type Errores = Record<string, string>;
@@ -97,8 +97,9 @@ export function limpiarPartida(e: EntradaPartida): EntradaPartida {
     ...e,
     productor: e.productor.trim().replace(/\s+/g, " "),
     tacos: n(e.tacos),
-    pesoPromedio: n(e.pesoPromedio),
-    grupos: e.grupos.map((g) => ({ tacos: n(g.tacos), pesoKg: n(g.pesoKg) })),
+    // Pesos por taco: el punto es decimal ("32.490" = 32,49 kg). Ver normalizarPeso.
+    pesoPromedio: normalizarPeso(e.pesoPromedio),
+    grupos: e.grupos.map((g) => ({ tacos: n(g.tacos), pesoKg: normalizarPeso(g.pesoKg) })),
     precioSolicitado: n(e.precioSolicitado),
     precioPagado: n(e.precioPagado),
     bolsas: Object.fromEntries(Object.entries(e.bolsas).map(([k, v]) => [k, n(v) || "0"])),

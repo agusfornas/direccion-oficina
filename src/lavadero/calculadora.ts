@@ -1,7 +1,7 @@
 // Cuenta de la pantalla "Calculadora": hasta cuánto se puede pagar por kilo con un taco
 // de rendimiento óptimo, contando toda la Elegida como Cubitos y toda la Común como Moñitos.
 // Traducción fiel de la v1.
-import { Decimal, leerEscrito, numeroOCero } from "../comun/numeros";
+import { Decimal, leerEscrito, leerPesoEscrito, numeroOCero } from "../comun/numeros";
 import { calcularPartida, fraccionesOptimas } from "./calculo";
 import { partidaVacia } from "./config-inicial";
 import type { ConfigLavadero } from "./tipos";
@@ -15,7 +15,7 @@ function pesos(c: ConfigLavadero) {
 
 /** `c` es una configuración limpia; `kgTacoTexto` y `pideTexto`, lo que escribió la persona. */
 export function calcularTacoOptimo(c: ConfigLavadero, kgTacoTexto: string, pideTexto: string) {
-  const kgTaco = leerEscrito(kgTacoTexto);
+  const kgTaco = leerPesoEscrito(kgTacoTexto);
   if (kgTaco === null || kgTaco.lte(0)) return null;
   const fr = fraccionesOptimas(c);
   const w = pesos(c);

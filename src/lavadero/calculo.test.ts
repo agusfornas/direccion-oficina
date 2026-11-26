@@ -287,3 +287,35 @@ describe("Lavadero: calculadora, precio de venta y precios de hoy", () => {
     expect(despues.gt(antes)).toBe(true);
   });
 });
+
+// 25/11/2026: en el peso por taco el punto es decimal. Antes "32.490" se leía como
+// treinta y dos mil cuatrocientos noventa kg (618 tacos daban 20.078.820 kg brutos);
+// ahora es 32,49 kg (20.078,82 kg brutos). Tacos, precios y bolsas siguen igual.
+import { normalizarNumero, normalizarPeso, leerPesoEscrito } from "../comun/numeros";
+
+describe("Lavadero: peso por taco con punto decimal", () => {
+  it("618 tacos × 32.490 kg = 20.078,82 kg brutos (antes daba 20.078.820)", () => {
+    const e = limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "618", pesoPromedio: "32.490", precioSolicitado: "300" });
+    expect(e.pesoPromedio).toBe("32.490");
+    expect(calcularPartida(e, CONFIG_INICIAL).kgBruto).toBe("20078.82");
+    // Antes: normalizarNumero("32.490") = "32490" → 20.078.820 kg.
+    expect(normalizarNumero("32.490")).toBe("32490");
+  });
+  it("con coma, la regla de siempre; tacos y precios no cambian", () => {
+    expect(normalizarPeso("32,49")).toBe("32.49");
+    expect(normalizarPeso("1.032,5")).toBe("1032.5");
+    expect(normalizarPeso(" 32.5 ")).toBe("32.5");
+    expect(normalizarPeso("32")).toBe("32");
+    expect(normalizarPeso("")).toBe("");
+    const e = limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "1.500", pesoPromedio: "32.490", precioSolicitado: "1.200" });
+    expect(e.tacos).toBe("1500");
+    expect(e.precioSolicitado).toBe("1200");
+  });
+  it("grupos de tacos y calculadora también", () => {
+    const e = limpiarPartida({ ...partidaVacia(), productor: "X", pesoModo: "GRUPOS", grupos: [{ tacos: "100", pesoKg: "31.250" }], precioSolicitado: "300" });
+    expect(e.grupos[0].pesoKg).toBe("31.250");
+    expect(calcularPartida(e, CONFIG_INICIAL).kgBruto).toBe("3125");
+    expect(leerPesoEscrito("32.490")!.toString()).toBe("32.49");
+    expect(calcularTacoOptimo(CONFIG_INICIAL, "32.490", "")!.kgTaco.toString()).toBe("32.49");
+  });
+});

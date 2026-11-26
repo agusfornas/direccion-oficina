@@ -62,6 +62,15 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.getByLabel('Bolsas de Industrial').fill('10');
   await page.waitForTimeout(300);
   ok((await texto()).includes('3.200 kg brutos'), 'kg brutos en vivo = 3.200');
+  await page.getByLabel('Peso promedio por taco').fill('32.490');
+  await page.waitForTimeout(200);
+  ok((await texto()).includes('3.249 kg brutos'), 'peso 32.490 = 32,49 kg por taco (punto decimal)');
+  await page.getByLabel('Peso promedio por taco').fill('320');
+  await page.waitForSelector('text=parece mucho');
+  ok(true, 'aviso si el peso por taco es raro');
+  await page.getByLabel('Peso promedio por taco').fill('32');
+  await page.waitForTimeout(200);
+  ok(!(await texto()).includes('parece mucho'), 'el aviso se va con un peso normal');
   await page.screenshot({ path: OUT + '/02-nueva-partida.png', fullPage: true });
   await page.click('text=Tocá para ver la explicación >> nth=0');
   ok((await texto()).includes('Pagando hasta'), 'explicación del límite se abre');
