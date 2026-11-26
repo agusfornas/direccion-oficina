@@ -35,8 +35,8 @@ Lista viva. Se tacha cuando está hecho y probado.
   (el precio se negocia); "Si le pagás" en lugar de "Como le pagás"; líneas repetidas juntas (26/11/2026).
 - [x] Explicación del límite: "Sin contar el pago al productor, la zanahoria … te deja $ X por kilo…" (26/11/2026).
 - [x] "No aplica" con aviso cuando el productor pide más que el tope: "No te alcanza para los $ X que pide." (26/11/2026).
-- [x] Aviso amarillo: "Pide $ X. Por rendimiento serían $ Y, pero por tus ventas y costos, guardando tu 10 %,
-  podés pagar hasta $ Z por kilo." (antes "Rindió para $ Y el kilo", parecía lo que vale la partida) (26/11/2026).
+- [x] Aviso amarillo: "Pide $ X. Como rindió el N % del óptimo, eso baja a $ Y ($ X × N %). Pero por tus ventas y
+  costos, guardando tu 10 %, podés pagar hasta $ Z por kilo." (antes "Rindió para $ Y el kilo") (26/11/2026).
 - [x] Cuando lo que pide × rendimiento pasa el tope, el Recomendado dice "A negociar. Pide $ X. No pases de $ Y."
   (antes repetía el número del Límite) (26/11/2026).
 

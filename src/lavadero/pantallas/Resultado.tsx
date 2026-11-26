@@ -276,6 +276,7 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
   const tuPct = Number(r.gananciaPct ?? 0) > 0 ? numeroFijo(r.gananciaPct ?? "0", 0) : null;
   const sinPedido = sinPrecioPedido(r);
   // El productor pide más de lo que podés pagar: se avisa debajo del "No aplica" (26/11/2026).
+  const pctRinde = porcentaje(String(Number(rec.factorRendimiento) * 100), 0);
   const pideSobreTope = rec.base === "PEDIDO" && rec.limitadoPor === "LIMITE";
   const pideDeMas = !sinPedido && r.precioSolicitado !== null && r.precioLimite !== null && Number(r.precioSolicitado) > Number(r.precioLimite) + 0.005;
   const porKg = (v: string | null) => (
@@ -364,13 +365,13 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
             {/* 26/11/2026: antes "Rindió para $ X el kilo", que parecía lo que vale la partida. */}
             Pide <b>{plata(r.precioSolicitado)}</b>.{" "}
             {rindioOptimo ? (
-              "Rindió el óptimo, "
+              <>Rindió el óptimo, pero </>
             ) : (
               <>
-                Por rendimiento serían <b>{plata(rec.precioPorRendimiento)}</b>,{" "}
+                Como rindió el {pctRinde} del óptimo, eso baja a <b>{plata(rec.precioPorRendimiento)}</b> ({plata(r.precioSolicitado)} × {pctRinde}). Pero{" "}
               </>
             )}
-            pero por tus ventas y costos{tuPct ? `, guardando tu ${tuPct}\u00a0%,` : ""} podés pagar hasta <b>{plata(r.precioLimite)}</b> por kilo.
+            por tus ventas y costos{tuPct ? `, guardando tu ${tuPct}\u00a0%,` : ""} podés pagar hasta <b>{plata(r.precioLimite)}</b> por kilo.
           </span>
         </div>
       )}
