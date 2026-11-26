@@ -1,49 +1,55 @@
-// Pantalla de entrada: tarjetas con el nombre de cada persona y teclado para el PIN de 4 números.
+// Pantalla de entrada: lista con el nombre de cada persona y campo para el PIN de 4 números.
 // Si la lista está vacía (app recién instalada), pide el nombre de la primera persona.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { crearPersona, entrar, ErrorApp, personas as listar, type Persona } from "./servidor";
 import { Cargando, mensajeDe } from "./ui";
 
-function Teclado({ alCompletar, ocupado }: { alCompletar: (pin: string) => void; ocupado: boolean }) {
+/**
+ * Campo de PIN: se escribe con el teclado numérico del teléfono (o de la computadora) y se ve
+ * como ••••. Entra solo al completar el cuarto número; el botón "Entrar" queda por si acaso.
+ */
+function CampoPin({ alCompletar, ocupado }: { alCompletar: (pin: string) => void; ocupado: boolean }) {
   const [pin, setPin] = useState("");
-  const tocar = (d: string) => {
-    if (ocupado) return;
-    const nuevo = pin + d;
-    if (nuevo.length < 4) return setPin(nuevo);
+  const campo = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!ocupado) campo.current?.focus();
+  }, [ocupado]);
+  const mandar = (p: string) => {
+    if (ocupado || p.length !== 4) return;
     // Se borra en el acto: si se borrara un instante después, un toque rápido reusaría el PIN anterior.
     setPin("");
-    alCompletar(nuevo);
+    alCompletar(p);
   };
-  useEffect(() => {
-    const tecla = (e: KeyboardEvent) => {
-      if (/^\d$/.test(e.key)) tocar(e.key);
-      if (e.key === "Backspace") setPin((p) => p.slice(0, -1));
-    };
-    window.addEventListener("keydown", tecla);
-    return () => window.removeEventListener("keydown", tecla);
-  });
   return (
-    <div className="pin">
-      <div className="pin-puntos" aria-label={`${pin.length} de 4 números`}>
-        {[0, 1, 2, 3].map((i) => (
-          <i key={i} className={i < pin.length ? "lleno" : ""} />
-        ))}
-      </div>
-      <div className="pin-teclas">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-          <button key={d} type="button" onClick={() => tocar(d)} disabled={ocupado}>
-            {d}
-          </button>
-        ))}
-        <span />
-        <button type="button" onClick={() => tocar("0")} disabled={ocupado}>
-          0
-        </button>
-        <button type="button" onClick={() => setPin((p) => p.slice(0, -1))} disabled={ocupado} aria-label="Borrar">
-          ⌫
-        </button>
-      </div>
-    </div>
+    <form
+      className="pin-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        mandar(pin);
+      }}
+    >
+      <input
+        ref={campo}
+        id="pin"
+        className="pin-campo"
+        type="password"
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={4}
+        placeholder="PIN"
+        aria-label="PIN de 4 números"
+        value={pin}
+        disabled={ocupado}
+        onChange={(e) => {
+          const p = e.target.value.replace(/\D/g, "").slice(0, 4);
+          if (p.length === 4) mandar(p);
+          else setPin(p);
+        }}
+      />
+      <button className="btn primary pin-entrar" type="submit" disabled={ocupado || pin.length !== 4}>
+        Entrar
+      </button>
+    </form>
   );
 }
 
@@ -156,14 +162,20 @@ export function Entrada({ alEntrar }: { alEntrar: (nombre: string) => void }) {
       <button type="button" className="volver-lista" onClick={volver}>
         ‹ Cambiar de persona
       </button>
-      <h1>Hola, {elegida.nombre}</h1>
-      <p className="inicio-s">
-        {elegida.tienePin ? "Poné tu PIN." : primerPin === null ? "Es tu primera vez: elegí un PIN de 4 números." : "Ponelo de nuevo para confirmar."}
-      </p>
-      <Teclado alCompletar={conPin} ocupado={ocupado} />
-      <p className="err mt-s" role="alert" style={{ minHeight: 20, textAlign: "center" }}>
-        {aviso && aviso !== "Ponelo de nuevo para confirmar." ? aviso : ""}
-      </p>
+      <div className="pin-tarjeta">
+        <h1>Hola, {elegida.nombre}</h1>
+        <p className="pin-s">
+          {elegida.tienePin
+            ? "Ingresá tu PIN de 4 números."
+            : primerPin === null
+              ? "Es tu primera vez: elegí un PIN de 4 números."
+              : "Ponelo de nuevo para confirmar."}
+        </p>
+        <CampoPin alCompletar={conPin} ocupado={ocupado} />
+        <p className="err mt-s" role="alert" style={{ minHeight: 20 }}>
+          {aviso && aviso !== "Ponelo de nuevo para confirmar." ? aviso : ""}
+        </p>
+      </div>
     </div>
   );
 }

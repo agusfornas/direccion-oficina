@@ -1451,47 +1451,64 @@ button.inicio-fila {
   font-size: 17px;
   cursor: pointer;
 }
-.pin {
-  display: grid;
-  gap: 26px;
-  justify-items: center;
-  margin-top: 18px;
-}
-.pin-puntos {
-  display: flex;
-  gap: 18px;
-}
-.pin-puntos i {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 1.5px solid var(--lista-ink);
-}
-.pin-puntos i.lleno {
-  background: var(--lista-ink);
-}
-.pin-teclas {
-  display: grid;
-  grid-template-columns: repeat(3, 76px);
-  gap: 16px 24px;
-}
-.pin-teclas button {
-  width: 76px;
-  height: 76px;
-  border: 0;
-  border-radius: 50%;
+/* PIN: tarjeta con un campo y el botón Entrar */
+.pin-tarjeta {
   background: var(--lista-fila);
-  color: var(--lista-ink);
-  font-size: 30px;
-  font-weight: 400;
-  cursor: pointer;
+  border-radius: 20px;
+  padding: 28px 24px 18px;
+  text-align: center;
+  box-shadow: var(--shadow);
 }
-.pin-teclas button:active {
-  background: var(--lista-toque);
+.pin-tarjeta h1 {
+  margin: 0;
+  font-size: 28px;
 }
-.pin-teclas button[aria-label="Borrar"] {
-  background: none;
+.pin-s {
+  color: var(--lista-gris);
+  font-size: 16px;
+  margin: 8px 0 22px;
+}
+.pin-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+input.pin-campo:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.pin-tarjeta .err {
+  color: var(--bad);
+  font-size: 14px;
+  font-weight: 700;
+}
+input.pin-campo {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  outline: none;
+  height: 56px;
+  border-radius: 14px;
+  text-align: center;
   font-size: 24px;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+}
+input.pin-campo::placeholder {
+  color: var(--ink-3);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+}
+.pin-entrar {
+  height: 54px;
+  border-radius: 14px;
+  font-size: 18px;
 }
 .quien-soy {
   margin-top: 28px;
