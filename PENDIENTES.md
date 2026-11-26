@@ -33,6 +33,8 @@ Lista viva. Se tacha cuando está hecho y probado.
 ## Textos
 - [x] Conclusión del resumen: "la partida da para $ X" en lugar de "a este productor le pagás $ X"
   (el precio se negocia); "Si le pagás" en lugar de "Como le pagás"; líneas repetidas juntas (26/11/2026).
+- [x] Explicación del límite: "Sin contar el pago al productor, la zanahoria … te deja $ X por kilo…" (26/11/2026).
+- [x] "No aplica" con aviso cuando el productor pide más que el tope: "No te alcanza para los $ X que pide." (26/11/2026).
 
 ## Fórmulas
 - [x] Rendimiento: ninguna calidad compensa a la otra. Elegida y Común cuentan solo hasta su óptimo

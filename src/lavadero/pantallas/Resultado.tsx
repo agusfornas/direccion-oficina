@@ -275,6 +275,8 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
   const [recAbierto, propsRec] = useDesplegable();
   const tuPct = Number(r.gananciaPct ?? 0) > 0 ? numeroFijo(r.gananciaPct ?? "0", 0) : null;
   const sinPedido = sinPrecioPedido(r);
+  // El productor pide más de lo que podés pagar: se avisa debajo del "No aplica" (26/11/2026).
+  const pideDeMas = !sinPedido && r.precioSolicitado !== null && r.precioLimite !== null && Number(r.precioSolicitado) > Number(r.precioLimite) + 0.005;
   const porKg = (v: string | null) => (
     <div className="v">
       {v === null ? "—" : plata(v)} <small>/ kg</small>
@@ -294,7 +296,9 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
           ) : recomendadoBajoLimite ? (
             <>
               <div className="v">No aplica</div>
-              <div className="d">Te deja hasta {plata(r.precioLimite)} por kilo.</div>
+              <div className="d">
+                {pideDeMas ? `No te alcanza para los ${plata(r.precioSolicitado)} que pide. ` : ""}Te deja hasta {plata(r.precioLimite)} por kilo.
+              </div>
             </>
           ) : (
             <>
