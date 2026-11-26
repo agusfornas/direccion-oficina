@@ -37,6 +37,23 @@ export function normalizarNumero(valor: unknown): string {
   return t;
 }
 
+/**
+ * Como normalizarNumero, pero para PESOS POR TACO (kg de un taco), donde el punto es
+ * siempre decimal: "32.490" → "32.49" kg, no 32.490 kg. Ningún taco pesa miles de kilos,
+ * y el teclado numérico del iPhone (con región en inglés) solo trae punto, no coma.
+ * Con coma sigue la regla de siempre: "32,49" → "32.49"; "1.032,5" → "1032.5".
+ * (25/11/2026: "618 tacos × 32.490" daba 20 millones de kg.)
+ */
+export function normalizarPeso(valor: unknown): string {
+  if (valor === null || valor === undefined) return "";
+  const t = String(valor).trim().replace(/\s|\$/g, "");
+  if (t.includes(",")) return normalizarNumero(t);
+  return t;
+}
+
+/** Peso por taco arriba de esto se marca con un aviso ("¿seguro?"); no impide guardar. */
+export const PESO_TACO_RARO = 100;
+
 const FORMATO_LIMPIO = /^-?\d+(\.\d+)?$/;
 
 /** Lee un número YA LIMPIO ("1234.5"). null si está vacío o no es un número. */
@@ -57,6 +74,9 @@ export function esNumeroOVacio(valor: unknown): boolean {
 
 /** Para lo que escribe una persona en un solo campo (calculadoras): normaliza y lee. */
 export const leerEscrito = (valor: unknown): Decimal | null => leerNumero(normalizarNumero(valor));
+
+/** Igual que leerEscrito, para un peso por taco escrito por una persona (punto = decimal). */
+export const leerPesoEscrito = (valor: unknown): Decimal | null => leerNumero(normalizarPeso(valor));
 
 /** a / b, o null si b es cero. */
 export const dividir = (a: Decimal, b: Decimal): Decimal | null => (b.isZero() ? null : a.div(b));

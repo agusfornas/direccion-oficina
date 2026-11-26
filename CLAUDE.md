@@ -39,7 +39,8 @@ La v1 era un artefacto de claude.ai; los datos tienen la misma forma (`MUDANZA.m
 
 - **Dos tipos de números.** Lo que escribe una persona ("1.500", "1.234,5") se interpreta UNA vez
   con `normalizarNumero()` al limpiar el formulario. Lo guardado o calculado ("1500", "2.415") se lee
-  con `leerNumero()`, que es estricto. Explicación en `src/comun/numeros.ts`.
+  con `leerNumero()`, que es estricto. Explicación en `src/comun/numeros.ts`. Excepción: el **peso por taco**
+  usa `normalizarPeso()`, donde el punto es siempre decimal ("32.490" = 32,49 kg; el teclado del iPhone no trae coma).
 - **Lo exacto se decide en el servidor.** El número de partida/viaje y el "no pisar cambios ajenos"
   (columna `rev`) se resuelven en una sola operación de la base (`servidor/almacen.ts`). La página
   siempre guarda por `src/comun/servidor.ts`; no inventes otra forma de escribir.

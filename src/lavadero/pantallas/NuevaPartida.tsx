@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ErrorApp } from "../../comun/servidor";
 import { hoy } from "../../comun/fechas";
-import { numero } from "../../comun/numeros";
+import { leerPesoEscrito, numero, PESO_TACO_RARO } from "../../comun/numeros";
 import { avisar, Campo, Cargando, ir, mensajeDe, Numero } from "../../comun/ui";
 import { calcularPartida } from "../calculo";
 import { partidaVacia } from "../config-inicial";
@@ -216,6 +216,17 @@ export function NuevaPartida({ editarId }: { editarId?: number }) {
               <span className="muted">·</span>
               <span>{numero(resultado.kgBruto)} kg brutos</span>
             </div>
+            {(() => {
+              const peso = leerPesoEscrito(form.pesoPromedio);
+              return peso && peso.gt(PESO_TACO_RARO) ? (
+                <div className="aviso warn mt-s">
+                  <span aria-hidden>⚠</span>
+                  <span>
+                    ¿Seguro? <b>{numero(peso.toString())} kg por taco</b> parece mucho. Para decimales usá punto o coma: 32.49 o 32,49.
+                  </span>
+                </div>
+              ) : null;
+            })()}
             <div className="grid mt">
               <Campo
                 label="Precio solicitado o de referencia por kg"
