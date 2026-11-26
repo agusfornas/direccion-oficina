@@ -236,6 +236,19 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   ok((await cel.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'estadísticas sin scroll horizontal en celular');
   await cel.screenshot({ path: OUT + '/09-estadisticas-oscuro.png', fullPage: true });
 
+  // En el celular ningún campo puede tener letra de menos de 16: si no, el iPhone hace zoom al tocarlo.
+  for (const h of ['#nueva', '#configuracion', '#calculadora', '#t-nuevo', '#t-configuracion', '#t-calculadora']) {
+    await cel.goto(URL + h);
+    await cel.waitForSelector('main input');
+    const chicos = await cel.evaluate(() =>
+      [...document.querySelectorAll('input, select, textarea')]
+        .filter((el) => el.offsetParent !== null && parseFloat(getComputedStyle(el).fontSize) < 16)
+        .map((el) => el.id || el.getAttribute('aria-label') || el.type),
+    );
+    ok(chicos.length === 0, `${h}: campos con letra de 16 o más (sin zoom del iPhone) ${chicos.slice(0, 3).join(', ')}`);
+    ok((await cel.evaluate(() => document.documentElement.scrollWidth)) <= 390, `${h}: sin scroll horizontal en celular`);
+  }
+
   const reales = errores.filter((e) => !/fonts\.googleapis|ERR_|Failed to load resource/.test(e));
   ok(reales.length === 0, 'sin errores en consola: ' + reales.slice(0, 3).join(' | '));
   await browser.close();

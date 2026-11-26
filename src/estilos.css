@@ -1674,3 +1674,15 @@ p.muted,
 .precio-card .d {
   opacity: 0.85;
 }
+
+/* Celular: los campos con letra de 16 o más. Con menos, el iPhone hace zoom al tocar un
+   campo y después hay que acomodar la pantalla a mano (26/11/2026). Va al final para ganarle
+   a las reglas de arriba (por ejemplo la tabla de productos de Configuración). */
+@media (width<=720px) {
+  input,
+  select,
+  textarea,
+  table.productos-cfg input {
+    font-size: 16px;
+  }
+}
