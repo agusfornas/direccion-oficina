@@ -348,8 +348,16 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
         <div className="aviso warn mt">
           <span aria-hidden>⚠</span>
           <span>
-            Rindió para <b>{plata(rec.precioPorRendimiento)}</b> el kilo. Tu tope{tuPct ? ` para ganar el ${tuPct} %` : ""} es{" "}
-            <b>{plata(r.precioLimite)}</b>.
+            {/* 26/11/2026: antes "Rindió para $ X el kilo", que parecía lo que vale la partida. */}
+            Pide <b>{plata(r.precioSolicitado)}</b>.{" "}
+            {rindioOptimo ? (
+              "Rindió el óptimo, "
+            ) : (
+              <>
+                Por rendimiento serían <b>{plata(rec.precioPorRendimiento)}</b>,{" "}
+              </>
+            )}
+            pero por tus ventas y costos{tuPct ? `, guardando tu ${tuPct}\u00a0%,` : ""} podés pagar hasta <b>{plata(r.precioLimite)}</b> por kilo.
           </span>
         </div>
       )}

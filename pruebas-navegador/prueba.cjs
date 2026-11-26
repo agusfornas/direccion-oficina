@@ -81,6 +81,13 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   ok((await page.locator('.precio-card.blue').count()) === 0, 'sin precio pedido: no hay tarjeta de Precio Recomendado');
   await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
   await page.waitForSelector('.precio-card.blue');
+  // Aviso amarillo cuando lo que pide (ajustado por rendimiento) pasa el tope.
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('100000');
+  await page.waitForSelector('text=podés pagar hasta');
+  ok(/Pide \$ 100\.000,00\. (Por rendimiento serían \$ [\d.,]+, |Rindió el óptimo, )pero por tus ventas y costos, guardando tu 10 %, podés pagar hasta \$ [\d.,]+ por kilo\./.test(await texto()),
+    'aviso: pide, por rendimiento y hasta cuánto podés pagar');
+  await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
+  await page.waitForTimeout(200);
   // "No aplica": si lo que pide pasa el tope, avisa que no alcanza; si no, no.
   {
     const tx = await texto();
