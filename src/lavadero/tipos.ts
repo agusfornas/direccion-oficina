@@ -80,6 +80,8 @@ export interface ResultadoProducto {
 export interface Recomendado {
   valorNetoReal: string | null;
   comunExcedenteKg: string | null;
+  /** Kg de Elegida por encima del óptimo (no suman). Solo en partidas calculadas desde el 26/11/2026. */
+  elegidaExcedenteKg?: string | null;
   valorNetoOptimo: string | null;
   factorRendimiento: string | null;
   factorAplicado: string | null;

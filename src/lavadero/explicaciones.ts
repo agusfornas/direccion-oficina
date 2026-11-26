@@ -76,9 +76,17 @@ export function explicarRecomendado(r: ResultadoPartida): string[] {
     t.push(
       `Taco de ${numeroFijo(r.pesoPromedioTaco, 2)} kg: lo esperado es ${numeroFijo(r.optimo.kgElegidaPorTaco, 1)} kg de Elegida y ${numeroFijo(r.optimo.kgComunPorTaco, 1)} kg de Común. Este dio ${numeroFijo(String(Number(r.kgElegida) / tacos), 1)} y ${numeroFijo(String(Number(r.kgComun) / tacos), 1)}.`,
     );
+  // Lo que sobra de una calidad no compensa lo que falta de la otra.
   const comunDeMas = rec.comunExcedenteKg ? Number(rec.comunExcedenteKg) : 0;
-  if (comunDeMas > 0.5 && tacos > 0)
-    t.push(`La Común de más (${numeroFijo(String(comunDeMas / tacos), 1)} kg por taco) no compensa la Elegida que falta.`);
+  const elegidaDeMas = rec.elegidaExcedenteKg ? Number(rec.elegidaExcedenteKg) : 0;
+  if (tacos > 0) {
+    if (comunDeMas > 0.5 && elegidaDeMas > 0.5)
+      t.push("La Elegida y la Común de más no suman: cada una cuenta solo hasta su óptimo.");
+    else if (comunDeMas > 0.5)
+      t.push(`La Común de más (${numeroFijo(String(comunDeMas / tacos), 1)} kg por taco) no compensa la Elegida que falta.`);
+    else if (elegidaDeMas > 0.5)
+      t.push(`La Elegida de más (${numeroFijo(String(elegidaDeMas / tacos), 1)} kg por taco) no compensa la Común que falta.`);
+  }
   if (sinPrecioPedido(r) && limite !== null) {
     if (rinde !== null) t.push(`Rindió el ${pctRedondo(rinde)} del óptimo.`);
     if (rec.precio !== null) {
@@ -141,7 +149,15 @@ export function resumenPartida(r: ResultadoPartida) {
       nombre: "Elegida",
       esperado: espElegida,
       dio: dioElegida,
-      diferencia: dioElegida < espElegida ? `${dif(dioElegida, espElegida)}\u00a0% menos de lo que debería` : dioElegida > espElegida ? `${dif(dioElegida, espElegida)}\u00a0% más` : "igual",
+      diferencia:
+        dioElegida < espElegida
+          ? `${dif(dioElegida, espElegida)}\u00a0% menos de lo que debería`
+          : dioElegida > espElegida
+            ? // Desde el 26/11/2026 la Elegida de más tampoco suma (las partidas anteriores no traen el dato).
+              r.recomendado.elegidaExcedenteKg !== undefined
+              ? `${dif(dioElegida, espElegida)}\u00a0% más, pero cuenta solo hasta ${numeroFijo(String(espElegida), 1)} kg`
+              : `${dif(dioElegida, espElegida)}\u00a0% más`
+            : "igual",
     },
     {
       nombre: "Común",

@@ -10,7 +10,7 @@ import type { ConfigLavadero, EntradaPartida, Producto, ResultadoPartida } from 
 /** Se guarda dentro de cada partida, para saber con qué fórmulas se calculó. */
 export const FORMULAS = {
   version:
-    "planilla-v1 / economia-v2 (ganancia) / recomendado-pedido-x-rendimiento-v9 (común con tope en el óptimo; sin pedido: límite × rendimiento)",
+    "planilla-v1 / economia-v2 (ganancia) / recomendado-pedido-x-rendimiento-v10 (Elegida y Común con tope en su óptimo: ninguna compensa a la otra; sin pedido: límite × rendimiento)",
   descripciones: {
     cubitosPorTaco: "(Cubitos × 1 + 20×1 × 2 + Moños (Ext) × 2) / Tacos",
     generalPorTaco: "(Cubitos × 0,5 + 20×1 + Moños (Ext) + Moños + Moñitos × 0,5 + Industrial) / Tacos",
@@ -26,7 +26,7 @@ export const FORMULAS = {
       "(Ingresos totales − Costos operativos, incluida la ganancia de la empresa) / Kg brutos recibidos",
     netoPorBolsa: "Precio de venta − Mano de obra − Costo de bolsa del producto",
     valorNetoReal:
-      "Σ bolsas de Elegida × neto por bolsa + Σ bolsas de Común × neto por bolsa × mín(kg Común óptimos / kg Común reales, 1) — la Común no compensa la Elegida",
+      "Σ bolsas de Elegida × neto por bolsa × mín(kg Elegida óptimos / kg Elegida reales, 1) + Σ bolsas de Común × neto por bolsa × mín(kg Común óptimos / kg Común reales, 1) — cada calidad cuenta solo hasta su óptimo: ninguna compensa a la otra",
     valorNetoOptimo:
       "Kg Elegida óptimos × valor neto por kg de Elegida + Kg Común óptimos × valor neto por kg de Común (según la mezcla de valuación)",
     precioRecomendado:
@@ -242,6 +242,7 @@ export function calcularPartida(e: EntradaPartida, c: ConfigLavadero): Resultado
     recomendado: {
       valorNetoReal: textoONulo(rec.vnr),
       comunExcedenteKg: textoONulo(rec.comunExcedenteKg),
+      elegidaExcedenteKg: textoONulo(rec.elegidaExcedenteKg ?? null),
       valorNetoOptimo: textoONulo(rec.vno),
       factorRendimiento: textoONulo(rec.factor),
       factorAplicado: textoONulo(rec.factorAplicado),
@@ -274,6 +275,7 @@ interface CalculoRecomendado {
   limiteOptimo: Decimal | null;
   precioBase: Decimal | null;
   comunExcedenteKg: Decimal | null;
+  elegidaExcedenteKg?: Decimal | null;
   precio: Decimal | null;
   limitadoPor: "LIMITE" | null;
   motivo: string | null;
@@ -311,10 +313,12 @@ export function precioRecomendado(
     if (p.categoria === "ELEGIDA") netoElegida = netoElegida.plus(b.times(n));
     else netoComun = netoComun.plus(b.times(n));
   }
-  // La común que sobra por encima del óptimo no suma: no compensa la elegida que faltó.
-  const topeComun = prod.kgComun.gt(opt.comun) && prod.kgComun.gt(0) ? opt.comun.div(prod.kgComun) : new Decimal(1);
+  // Cada calidad cuenta solo hasta su óptimo: lo que sobra de una no compensa lo que
+  // falta de la otra (26/11/2026; antes solo la Común tenía tope y la Elegida de más sumaba).
+  const hastaOptimo = (real: Decimal, optimo: Decimal) => (real.gt(optimo) && real.gt(0) ? optimo.div(real) : new Decimal(1));
   const comunExcedenteKg = Decimal.max(prod.kgComun.minus(opt.comun), 0);
-  const vnr = netoElegida.plus(netoComun.times(topeComun));
+  const elegidaExcedenteKg = Decimal.max(prod.kgElegida.minus(opt.elegida), 0);
+  const vnr = netoElegida.times(hastaOptimo(prod.kgElegida, opt.elegida)).plus(netoComun.times(hastaOptimo(prod.kgComun, opt.comun)));
 
   // Valor neto por kg de una categoría, según la mezcla de productos elegida.
   const valorPorKg = (categoria: "ELEGIDA" | "COMUN"): { v: Decimal | null; motivo?: string } => {
@@ -369,7 +373,7 @@ export function precioRecomendado(
     const p = base.times(factorAplicado);
     return {
       vnr, vno, factor, factorAplicado, precioPorRendimiento: p, descuento: base.minus(p), limiteOptimo,
-      precioBase: base, precio: p, limitadoPor: null, comunExcedenteKg, motivo: null, sinPedido: true,
+      precioBase: base, precio: p, limitadoPor: null, comunExcedenteKg, elegidaExcedenteKg, motivo: null, sinPedido: true,
     };
   }
   const porRendimiento = solicitado.times(factorAplicado);
@@ -378,6 +382,6 @@ export function precioRecomendado(
   return {
     vnr, vno, factor, factorAplicado, precioPorRendimiento: porRendimiento, descuento: solicitado.minus(porRendimiento),
     limiteOptimo, precioBase: solicitado, precio: limitado ? tope : porRendimiento, limitadoPor: limitado ? "LIMITE" : null,
-    comunExcedenteKg, motivo: null, sinPedido: false,
+    comunExcedenteKg, elegidaExcedenteKg, motivo: null, sinPedido: false,
   };
 }
