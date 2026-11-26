@@ -8,7 +8,8 @@ import { Nt, Ft, It, Ut, Gt } from "../pruebas/original/lavadero-v1.js";
 import { calcularPartida } from "./calculo";
 import { CONFIG_INICIAL, partidaVacia } from "./config-inicial";
 import { limpiarConfig, limpiarPartida, validarConfig, validarPartida } from "./validar";
-import type { ConfigLavadero, EntradaPartida } from "./tipos";
+import type { ConfigLavadero, EntradaPartida, ResultadoPartida } from "./tipos";
+import { Decimal } from "../comun/numeros";
 
 // Generador al azar con semilla fija (siempre los mismos casos).
 function azar(semilla: number) {
@@ -70,6 +71,55 @@ function partidaAlAzar(a: ReturnType<typeof azar>): EntradaPartida {
   return e;
 }
 
+/**
+ * DIFERENCIA ANOTADA CON LA V1 (26/11/2026, pedido del dueño): en el rendimiento, la Elegida
+ * también cuenta solo hasta su óptimo (antes solo la Común tenía tope y la Elegida de más
+ * compensaba la Común que faltaba). Cuando NO sobra Elegida, todo tiene que dar igual que la v1.
+ * Cuando sobra, todo lo demás igual, y el recomendado se controla con la cuenta nueva:
+ *   valor real = valor real de la v1 − neto de la Elegida × (1 − kg Elegida óptimos / kg Elegida reales)
+ */
+function compararConV1(r: ResultadoPartida, v1: ResultadoPartida, msg: string) {
+  const sacar = (x: ResultadoPartida) => {
+    const { recomendado, difSolicitadoRecomendado, difRecomendadoLimite, ...resto } = x;
+    return { recomendado, difs: [difSolicitadoRecomendado, difRecomendadoLimite], resto };
+  };
+  const nuevo = sacar(r);
+  const viejo = sacar(v1);
+  expect(nuevo.resto, msg).toEqual(viejo.resto);
+  const { elegidaExcedenteKg, ...rec } = nuevo.recomendado;
+  const realE = new Decimal(r.kgElegida);
+  const optE = new Decimal(r.optimo.kgElegida);
+  const sobraElegida = realE.gt(optE);
+  if (rec.valorNetoReal === null) expect(elegidaExcedenteKg ?? null, msg).toBeNull();
+  else expect(elegidaExcedenteKg, msg).toBe(Decimal.max(realE.minus(optE), 0).toString());
+  if (!sobraElegida || viejo.recomendado.valorNetoReal === null || viejo.recomendado.valorNetoOptimo === null) {
+    expect(rec, msg).toEqual(viejo.recomendado);
+    expect(nuevo.difs, msg).toEqual(viejo.difs);
+    return false;
+  }
+  const cerca = (a: string | null, b: Decimal, que: string) => {
+    expect(a, `${msg} ${que}`).not.toBeNull();
+    expect(new Decimal(a!).minus(b).abs().lt("1e-20"), `${msg} ${que}: ${a} vs ${b}`).toBe(true);
+  };
+  const netoElegida = r.productos
+    .filter((p) => p.categoria === "ELEGIDA" && p.netoPorBolsa !== null)
+    .reduce((t, p) => t.plus(new Decimal(p.bolsas).times(p.netoPorBolsa!)), new Decimal(0));
+  const vnr = new Decimal(viejo.recomendado.valorNetoReal).minus(netoElegida.times(new Decimal(1).minus(optE.div(realE))));
+  const vno = new Decimal(viejo.recomendado.valorNetoOptimo);
+  expect(rec.valorNetoOptimo, msg).toBe(viejo.recomendado.valorNetoOptimo);
+  cerca(rec.valorNetoReal, vnr, "valor neto real");
+  const factor = vnr.div(vno);
+  cerca(rec.factorRendimiento, factor, "rendimiento");
+  const fa = Decimal.max(0, Decimal.min(factor, 1));
+  if (rec.precio === null || r.precioLimite === null) return true;
+  const precio =
+    rec.base === "LIMITE"
+      ? Decimal.max(new Decimal(r.precioLimite), 0).times(fa)
+      : Decimal.min(new Decimal(r.precioSolicitado!).times(fa), Decimal.max(new Decimal(r.precioLimite), 0));
+  cerca(rec.precio, precio, "precio recomendado");
+  return true;
+}
+
 describe("Lavadero: la v2 calcula igual que la v1", () => {
   it("5000 partidas al azar: cálculo, validaciones y limpieza idénticos", () => {
     for (let i = 0; i < 5000; i++) {
@@ -86,7 +136,7 @@ describe("Lavadero: la v2 calcula igual que la v1", () => {
       const limpia = limpiarPartida(e);
       const cfg = limpiarConfig(c, CONFIG_INICIAL);
       if (!Object.keys(validarConfig(cfg)).length && !Object.keys(validarPartida(limpia)).length)
-        expect(calcularPartida(limpia, cfg), `cálculo #${i}`).toEqual(Nt(limpia, cfg));
+        compararConV1(calcularPartida(limpia, cfg), Nt(limpia, cfg), `cálculo #${i}`);
     }
   });
 });
@@ -166,6 +216,15 @@ function partidaValida(a: ReturnType<typeof azar>): EntradaPartida {
  */
 function resumenComoAhora(v: ReturnType<typeof resumenPartida>) {
   if (!v) return v;
+  // 26/11/2026: la Elegida de más tampoco suma ("X % más, pero cuenta solo hasta Y kg").
+  v = {
+    ...v,
+    filas: v.filas.map((f) =>
+      f.nombre === "Elegida" && /^\d+\u00a0% más$/.test(f.diferencia)
+        ? { ...f, diferencia: `${f.diferencia}, pero cuenta solo hasta ${numeroFijo(String(f.esperado), 1)} kg` }
+        : f,
+    ),
+  };
   const c = v.conclusion.map((x: string) =>
     x.replace("Por cómo rindió, a este productor le pagás ", "Por cómo rindió, la partida da para ").replace(/^Como le pagás /, "Si le pagás "),
   );
@@ -175,19 +234,35 @@ function resumenComoAhora(v: ReturnType<typeof resumenPartida>) {
   return { ...v, conclusion: c };
 }
 
+/** Explicación del recomendado de la v1, con las líneas de "no compensa" de ahora (26/11/2026). */
+function recomendadoComoAhora(v1: string[], r: ResultadoPartida): string[] {
+  const tacos = Number(r.tacos);
+  const comun = Number(r.recomendado.comunExcedenteKg ?? 0);
+  const elegida = Number(r.recomendado.elegidaExcedenteKg ?? 0);
+  const t = [...v1];
+  const i = t.findIndex((x) => x.startsWith("La Común de más ("));
+  if (comun > 0.5 && elegida > 0.5) t[i] = "La Elegida y la Común de más no suman: cada una cuenta solo hasta su óptimo.";
+  else if (elegida > 0.5 && tacos > 0 && comun <= 0.5) {
+    const donde = t[0]?.startsWith("Taco de ") ? 1 : 0;
+    t.splice(donde, 0, `La Elegida de más (${numeroFijo(String(elegida / tacos), 1)} kg por taco) no compensa la Común que falta.`);
+  }
+  return t;
+}
+
 describe("Lavadero: explicaciones y formatos iguales a la v1", () => {
   it("partidas válidas al azar", () => {
     let comparadas = 0;
+    let conElegidaDeMas = 0;
     for (let i = 0; i < 60000 && comparadas < 1500; i++) {
       const a = azar(i + 99);
       const cfg = limpiarConfig(configValida(a), CONFIG_INICIAL);
       const e = limpiarPartida(partidaValida(a));
       if (Object.keys(validarConfig(cfg)).length || Object.keys(validarPartida(e)).length) continue;
       const r = calcularPartida(e, cfg);
-      expect(r, `cálculo válido #${i}`).toEqual(Nt(e, cfg));
+      if (compararConV1(r, Nt(e, cfg), `cálculo válido #${i}`)) conElegidaDeMas++;
       comparadas++;
       expect(explicarLimite(r, e.productor), `límite #${i}`).toEqual(In(r, e.productor));
-      expect(explicarRecomendado(r), `recomendado #${i}`).toEqual(Rn(r));
+      expect(explicarRecomendado(r), `recomendado #${i}`).toEqual(recomendadoComoAhora(Rn(r), r));
       expect(resumenPartida(r), `resumen #${i}`).toEqual(resumenComoAhora(Vn(r)));
       for (const v of [r.precioLimite, r.kgBruto, r.pctElegida, r.difSolicitadoLimite]) {
         expect(plata(v)).toBe(on(v));
@@ -198,6 +273,8 @@ describe("Lavadero: explicaciones y formatos iguales a la v1", () => {
       }
     }
     expect(comparadas).toBe(1500);
+    // Que haya bastantes partidas con Elegida de más, para que la regla nueva esté probada.
+    expect(conElegidaDeMas).toBeGreaterThan(100);
   });
 });
 
@@ -360,5 +437,54 @@ describe("Lavadero: conclusión del resumen (26/11/2026)", () => {
       "Sin precio pedido: no pases de $\u00a040,01 por kilo.",
       "Lo que arregles por debajo es ganancia extra, aparte de tu 10\u00a0%.",
     ]);
+  });
+});
+
+describe("Lavadero: ninguna calidad compensa a la otra (26/11/2026)", () => {
+  // 100 tacos de 32 kg con la configuración inicial: óptimo 2.000 kg de Elegida y 500 de Común.
+  // Esta partida dio 2.400 kg de Elegida (240 bolsas de Cubitos, 20 % más) y 250 de Común
+  // (25 de Moñitos, la mitad).
+  const e = limpiarPartida({
+    ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: "300",
+    bolsas: { CUBITOS: "240", VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: "25", INDUSTRIAL: "" },
+  });
+  const antes = Nt(e, CONFIG_INICIAL) as ResultadoPartida;
+  const ahora = calcularPartida(e, CONFIG_INICIAL);
+  const neto = (id: string) => new Decimal(ahora.productos.find((p) => p.id === id)!.netoPorBolsa!);
+
+  it("antes: la Elegida de más compensaba la Común que falta", () => {
+    // 240 × neto Cubitos + 25 × neto Moñitos, sin tope a la Elegida.
+    expect(antes.recomendado.valorNetoReal).toBe(neto("CUBITOS").times(240).plus(neto("MONITOS").times(25)).toString());
+  });
+  it("ahora: la Elegida cuenta solo hasta 2.000 kg (200 de las 240 bolsas)", () => {
+    const vnr = neto("CUBITOS").times(200).plus(neto("MONITOS").times(25));
+    expect(new Decimal(ahora.recomendado.valorNetoReal!).minus(vnr).abs().lt("1e-20")).toBe(true);
+    const factor = vnr.div(ahora.recomendado.valorNetoOptimo!);
+    expect(new Decimal(ahora.recomendado.factorRendimiento!).minus(factor).abs().lt("1e-20")).toBe(true);
+    expect(factor.lt(1)).toBe(true);
+    expect(new Decimal(ahora.recomendado.factorRendimiento!).lt(antes.recomendado.factorRendimiento!)).toBe(true);
+    expect(ahora.recomendado.elegidaExcedenteKg).toBe("400");
+    expect(ahora.recomendado.comunExcedenteKg).toBe("0");
+    // Precio recomendado: lo que pide × rendimiento (sin pasar el límite). Baja respecto de antes.
+    expect(new Decimal(ahora.recomendado.precio!).lte(antes.recomendado.precio!)).toBe(true);
+    // El Precio Límite no cambia: sale de lo que se vende.
+    expect(ahora.precioLimite).toBe(antes.precioLimite);
+  });
+  it("textos: la Elegida de más no compensa la Común que falta", () => {
+    expect(explicarRecomendado(ahora)).toContain("La Elegida de más (4,0 kg por taco) no compensa la Común que falta.");
+    const fila = resumenPartida(ahora)!.filas.find((f) => f.nombre === "Elegida")!;
+    expect(fila.diferencia).toBe("20\u00a0% más, pero cuenta solo hasta 20,0 kg");
+  });
+  it("y viceversa: la Común de más no compensa la Elegida que falta", () => {
+    const r = calcularPartida(
+      limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: "300",
+        bolsas: { CUBITOS: "150", VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: "80", INDUSTRIAL: "" } }),
+      CONFIG_INICIAL,
+    );
+    expect(explicarRecomendado(r)).toContain("La Común de más (3,0 kg por taco) no compensa la Elegida que falta.");
+  });
+  it("partidas guardadas antes del cambio: la fila de Elegida no dice 'cuenta solo hasta'", () => {
+    const fila = resumenPartida(antes)!.filas.find((f) => f.nombre === "Elegida")!;
+    expect(fila.diferencia).toBe("20\u00a0% más");
   });
 });
