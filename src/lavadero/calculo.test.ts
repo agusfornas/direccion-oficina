@@ -247,6 +247,20 @@ function resumenComoAhora(v: ReturnType<typeof resumenPartida>) {
   return { ...v, conclusion: c };
 }
 
+/**
+ * Diferencia anotada (26/11/2026, pedido del dueño): la primera frase de la explicación del
+ * límite aclara que todavía no está descontado el pago al productor.
+ */
+function limiteComoAhora(v1: string[]): string[] {
+  const t = [...v1];
+  const m = t[0]?.match(/^Con tus ventas y tus costos, la zanahoria (.+) deja (.+) por kilo(, con tu (.+) ya guardado)?\.$/);
+  if (m)
+    t[0] = m[3]
+      ? `Sin contar el pago al productor, la zanahoria ${m[1]} te deja ${m[2]} por kilo, ya con gastos y tu ${m[4]} cubiertos.`
+      : `Sin contar el pago al productor, la zanahoria ${m[1]} te deja ${m[2]} por kilo, ya con los gastos cubiertos.`;
+  return t;
+}
+
 /** Explicación del recomendado de la v1, con las líneas de "no compensa" de ahora (26/11/2026). */
 function recomendadoComoAhora(v1: string[], r: ResultadoPartida): string[] {
   const tacos = Number(r.tacos);
@@ -274,7 +288,7 @@ describe("Lavadero: explicaciones y formatos iguales a la v1", () => {
       const r = calcularPartida(e, cfg);
       if (compararConV1(r, Nt(e, cfg), `cálculo válido #${i}`)) conElegidaDeMas++;
       comparadas++;
-      expect(explicarLimite(r, e.productor), `límite #${i}`).toEqual(In(r, e.productor));
+      expect(explicarLimite(r, e.productor), `límite #${i}`).toEqual(limiteComoAhora(In(r, e.productor)));
       expect(explicarRecomendado(r), `recomendado #${i}`).toEqual(recomendadoComoAhora(Rn(r), r));
       expect(resumenPartida(r), `resumen #${i}`).toEqual(resumenComoAhora(Vn(r)));
       for (const v of [r.precioLimite, r.kgBruto, r.pctElegida, r.difSolicitadoLimite]) {
@@ -550,5 +564,20 @@ describe("Lavadero: precio pedido opcional (26/11/2026)", () => {
     expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "abc" })).precioSolicitado).toBeDefined();
     expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "-5" })).precioSolicitado).toBeDefined();
     expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "300" })).precioSolicitado).toBeUndefined();
+  });
+});
+
+describe("Lavadero: explicación del límite, primera frase (26/11/2026)", () => {
+  it("aclara que falta el pago al productor", () => {
+    const r = calcularPartida(
+      limpiarPartida({ ...partidaVacia(), productor: "Orlando", tacos: "100", pesoPromedio: "32", precioSolicitado: "200",
+        bolsas: { CUBITOS: "190", VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: "50", INDUSTRIAL: "" } }),
+      CONFIG_INICIAL,
+    );
+    expect(explicarLimite(r, "Orlando")[0]).toBe(
+      `Sin contar el pago al productor, la zanahoria de Orlando te deja ${plata(r.precioLimite)} por kilo, ya con gastos y tu 10\u00a0% cubiertos.`,
+    );
+    // Antes: "Con tus ventas y tus costos, la zanahoria de Orlando deja $ X por kilo, con tu 10 % ya guardado."
+    expect(In(r, "Orlando")[0]).toBe(`Con tus ventas y tus costos, la zanahoria de Orlando deja ${plata(r.precioLimite)} por kilo, con tu 10\u00a0% ya guardado.`);
   });
 });

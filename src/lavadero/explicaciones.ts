@@ -33,8 +33,8 @@ export function explicarLimite(r: ResultadoPartida, productor?: string): string[
   const t: string[] = [];
   t.push(
     gananciaPct > 0
-      ? `Con tus ventas y tus costos, la zanahoria ${de} deja ${$(limite)} por kilo, con tu ${tuPct} ya guardado.`
-      : `Con tus ventas y tus costos, la zanahoria ${de} deja ${$(limite)} por kilo.`,
+      ? `Sin contar el pago al productor, la zanahoria ${de} te deja ${$(limite)} por kilo, ya con gastos y tu ${tuPct} cubiertos.`
+      : `Sin contar el pago al productor, la zanahoria ${de} te deja ${$(limite)} por kilo, ya con los gastos cubiertos.`,
   );
   const pagando = (precio: number) => {
     const extraKg = limite - precio;
