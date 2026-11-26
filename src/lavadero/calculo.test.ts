@@ -122,6 +122,17 @@ function compararConV1(r: ResultadoPartida, v1: ResultadoPartida, msg: string) {
   return true;
 }
 
+/**
+ * DIFERENCIA ANOTADA (26/11/2026): el precio pedido es opcional. La v1 exigía un número mayor a 0;
+ * ahora vacío o 0 se aceptan (sin precio pedido) y solo se marca si es inválido o negativo.
+ */
+function validarComoAhora(v1: Record<string, string>, limpia: EntradaPartida) {
+  const { precioSolicitado: _, ...resto } = v1;
+  const n = limpia.precioSolicitado.trim();
+  const valido = n === "" || (/^-?\d+(\.\d+)?$/.test(n) && Number(n) >= 0);
+  return valido ? resto : { ...resto, precioSolicitado: "Precio inválido. Si no pide precio, dejalo vacío." };
+}
+
 describe("Lavadero: la v2 calcula igual que la v1", () => {
   it("5000 partidas al azar: cálculo, validaciones y limpieza idénticos", () => {
     for (let i = 0; i < 5000; i++) {
@@ -129,7 +140,7 @@ describe("Lavadero: la v2 calcula igual que la v1", () => {
       const c = configAlAzar(a);
       const e = partidaAlAzar(a);
       // La v2 valida lo ya limpio; la v1 validaba lo escrito. El resultado tiene que ser el mismo.
-      expect(validarPartida(limpiarPartida(e)), `validar partida #${i}`).toEqual(Ft(e));
+      expect(validarPartida(limpiarPartida(e)), `validar partida #${i}`).toEqual(validarComoAhora(Ft(e), limpiarPartida(e)));
       expect(validarConfig(limpiarConfig(c, CONFIG_INICIAL)), `validar config #${i}`).toEqual(It(c));
       expect(limpiarPartida(e), `limpiar partida #${i}`).toEqual(Gt(e));
       expect(limpiarConfig(c, CONFIG_INICIAL), `limpiar config #${i}`).toEqual(Ut(c, CONFIG_INICIAL));
@@ -525,5 +536,19 @@ describe("Lavadero: el descuento por rendimiento es solo con precio pedido (26/1
     expect(vieja.recomendado.precio).not.toBeNull();
     expect(resumenPartida(vieja)!.conclusion[0]).toMatch(/^Sin precio pedido: no pases de/);
     expect(explicarLimite(vieja).some((t) => t.includes("(recomendado)"))).toBe(false);
+  });
+});
+
+describe("Lavadero: precio pedido opcional (26/11/2026)", () => {
+  const base = { ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32" };
+  it("antes era obligatorio; ahora vacío o 0 se puede guardar", () => {
+    expect((Ft({ ...base, precioSolicitado: "" }) as Record<string, string>).precioSolicitado).toBeDefined();
+    expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "" })).precioSolicitado).toBeUndefined();
+    expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "0" })).precioSolicitado).toBeUndefined();
+  });
+  it("inválido o negativo se sigue marcando", () => {
+    expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "abc" })).precioSolicitado).toBeDefined();
+    expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "-5" })).precioSolicitado).toBeDefined();
+    expect(validarPartida(limpiarPartida({ ...base, precioSolicitado: "300" })).precioSolicitado).toBeUndefined();
   });
 });

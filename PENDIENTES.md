@@ -39,10 +39,7 @@ Lista viva. Se tacha cuando está hecho y probado.
   rendimiento es solo cuando el productor pide un precio. Fórmulas v11 (26/11/2026).
 
 ## Para decidir (no se tocó para no cambiar resultados)
-- [ ] **Precio pedido obligatorio.** El formulario exige "Precio solicitado o de referencia", pero el motor
-  tiene preparado el caso "sin precio pedido" (desde v11: sin recomendado, "A negociar" por debajo del
-  límite) y las pantallas lo explican. Se ve en vivo con 0, pero no se puede guardar. ¿Se permite dejarlo vacío? Es cambiar una validación en
-  `src/lavadero/validar.ts`.
+- [x] Precio pedido opcional: vacío o 0 se puede guardar ("A negociar", sin recomendado) (26/11/2026).
 - [ ] **Precio pagado.** Se guarda vacío siempre (el formulario no lo pide), así que las estadísticas de
   "precio pagado" y "resultado estimado" no tienen datos. ¿Se agrega el campo?
 - [ ] **Configuración de Lavadero sin pantalla para** "precio de referencia" ni "mezcla de valuación"
