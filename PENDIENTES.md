@@ -20,6 +20,7 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [x] Inicio con estilo de lista y textos explicativos más chicos.
 - [x] Entrada (¿Quién sos? y PIN) con el mismo estilo de lista que el inicio (25/11/2026).
 - [x] PIN con un campo y botón "Entrar" (en lugar de las teclas redondas); entra solo al cuarto número (26/11/2026).
+- [x] Sin zoom del iPhone al tocar un campo: letra de 16 en los campos del celular (26/11/2026).
 - [ ] Desde ahora los cambios se hacen acá (GitHub → Cloudflare), no en el artefacto: si se toca el
   artefacto, la página real no se entera.
 
