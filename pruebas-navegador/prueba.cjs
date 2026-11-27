@@ -84,7 +84,7 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   // Aviso amarillo cuando lo que pide (ajustado por rendimiento) pasa el tope.
   await page.getByLabel('Precio solicitado o de referencia por kg').fill('100000');
   await page.waitForSelector('text=podés pagar hasta');
-  ok(/Pide \$ 100\.000,00\. (Por rendimiento serían \$ [\d.,]+, |Rindió el óptimo, )pero por tus ventas y costos, guardando tu 10 %, podés pagar hasta \$ [\d.,]+ por kilo\./.test(await texto()),
+  ok(/Pide \$ 100\.000,00\. (Como rindió el \d+ % del óptimo, eso baja a \$ [\d.,]+ \(\$ 100\.000,00 × \d+ %\)\. Pero |Rindió el óptimo, pero )por tus ventas y costos, guardando tu 10 %, podés pagar hasta \$ [\d.,]+ por kilo\./.test(await texto()),
     'aviso: pide, por rendimiento y hasta cuánto podés pagar');
   ok((await page.textContent('.precio-card.blue')).replace(/\u00a0/g, ' ').includes('A negociar') &&
      /Pide \$ 100\.000,00\. No pases de \$ [\d.,]+\./.test((await page.textContent('.precio-card.blue')).replace(/\u00a0/g, ' ')),
