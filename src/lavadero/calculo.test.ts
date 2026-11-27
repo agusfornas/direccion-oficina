@@ -592,23 +592,32 @@ describe("Lavadero: explicación del límite, primera frase (26/11/2026)", () =>
 });
 
 describe("Lavadero: cómo sale el % de rendimiento (27/11/2026)", () => {
-  it("lo que dio ÷ lo que valdría un taco óptimo, por taco", () => {
-    const r = calcularPartida(
+  const partida = (cubitos: string, monitos: string) =>
+    calcularPartida(
       limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: "80",
-        bolsas: { CUBITOS: "124", VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: "49", INDUSTRIAL: "" } }),
+        bolsas: { CUBITOS: cubitos, VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: monitos, INDUSTRIAL: "" } }),
       CONFIG_INICIAL,
     );
-    const real = plata(String(Number(r.recomendado.valorNetoReal) / 100), 0);
-    const opt = plata(String(Number(r.recomendado.valorNetoOptimo) / 100), 0);
+  // Valor por kilo de la configuración inicial: (precio − mano de obra − bolsa) ÷ kg de la bolsa.
+  const vE = (6000 - 487 - 250) / 10; // Cubitos: $ 526,30
+  const vC = (3000 - 242 - 250) / 10; // Moñitos: $ 250,80
+  it("este taco y el óptimo: kilos × valor por kilo; este ÷ óptimo = %", () => {
+    const r = partida("124", "49");
     const pct = `${Math.round(Number(r.recomendado.factorRendimiento) * 100)}\u00a0%`;
+    const este = 12.4 * vE + 4.9 * vC;
+    const opt = 20 * vE + 5 * vC;
+    expect(Number(r.recomendado.valorNetoReal) / 100).toBeCloseTo(este, 6);
+    expect(Number(r.recomendado.valorNetoOptimo) / 100).toBeCloseTo(opt, 6);
     expect(comoSaleRendimiento(r)).toEqual([
-      `Cómo sale el ${pct}:`,
-      "• Cada calidad cuenta hasta lo esperado: Elegida 12,4 de 20,0 kg y Común 4,9 de 5,0 kg.",
-      `• Lo que dio vale ${real} por taco, ya descontadas la mano de obra y las bolsas.`,
-      `• Un taco óptimo valdría ${opt}.`,
-      `• ${real} ÷ ${opt} = ${pct}.`,
+      `Cómo sale el ${pct}, con los precios por kilo ya descontadas la mano de obra y las bolsas:`,
+      `• Este taco: 12,4 kg de Elegida × ${plata(String(vE), 0)} + 4,9 kg de Común × ${plata(String(vC), 0)} = ${plata(String(este), 0)}`,
+      `• Taco óptimo: 20,0 kg de Elegida × ${plata(String(vE), 0)} + 5,0 kg de Común × ${plata(String(vC), 0)} = ${plata(String(opt), 0)}`,
+      `• ${plata(String(este), 0)} ÷ ${plata(String(opt), 0)} = ${pct}`,
     ]);
-    const t = explicarRecomendado(r);
-    expect(t.indexOf(`Cómo sale el ${pct}:`)).toBe(1);
+    expect(explicarRecomendado(r)[1]).toBe(comoSaleRendimiento(r)[0]);
+  });
+  it("lo que sobra de una calidad cuenta solo hasta lo esperado", () => {
+    const r = partida("124", "90");
+    expect(comoSaleRendimiento(r)[1]).toContain("5,0 kg de Común (dio 9,0; cuenta hasta 5,0)");
   });
 });
