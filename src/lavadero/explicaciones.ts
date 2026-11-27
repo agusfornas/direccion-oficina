@@ -95,8 +95,22 @@ export function comoSaleRendimiento(r: ResultadoPartida): string[] {
   if (vE !== null && vC !== null && Math.abs(espE * vE + espC * vC - optimo / tacos) <= 0.5) {
     const cuenta = (dio: number, esp: number, nombre: string) =>
       dio > esp ? `${kg(esp)} kg de ${nombre} (dio ${kg(dio)}; cuenta hasta ${kg(esp)})` : `${kg(dio)} kg de ${nombre}`;
+    // De dónde sale cada precio por kilo: lo que deja cada bolsa ÷ sus kilos; si salió más de
+    // un producto de la calidad, el promedio según los kilos de cada uno.
+    const deDonde = (cat: "ELEGIDA" | "COMUN", nombre: string, v: number) => {
+      const ps = r.productos.filter((p) => p.categoria === cat && Number(p.bolsas) > 0 && p.netoPorBolsa !== null);
+      const cuentas = ps.map((p) => {
+        const kgBolsa = Number(p.kg) / Number(p.bolsas);
+        return `${p.nombre} ${plata(p.netoPorBolsa)} por bolsa ÷ ${numeroFijo(String(kgBolsa), 0)} kg = ${plata(String(Number(p.netoPorBolsa) / kgBolsa))} el kilo`;
+      });
+      return ps.length > 1
+        ? `• ${nombre}: ${cuentas.join("; ")}. Promedio según los kilos de cada uno (${ps.map((p) => `${numeroFijo(p.kg, 0)} kg`).join(" y ")}): ${$0(v)} el kilo.`
+        : `• ${nombre}: ${cuentas[0]}.`;
+    };
     return [
       titulo,
+      deDonde("ELEGIDA", "Elegida", vE),
+      deDonde("COMUN", "Común", vC),
       `• Este taco: ${cuenta(dioE, espE, "Elegida")} × ${$0(vE)} + ${cuenta(dioC, espC, "Común")} × ${$0(vC)} = ${$0(real / tacos)}`,
       `• Taco óptimo: ${kg(espE)} kg de Elegida × ${$0(vE)} + ${kg(espC)} kg de Común × ${$0(vC)} = ${$0(optimo / tacos)}`,
       division,

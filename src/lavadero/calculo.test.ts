@@ -610,6 +610,8 @@ describe("Lavadero: cómo sale el % de rendimiento (27/11/2026)", () => {
     expect(Number(r.recomendado.valorNetoOptimo) / 100).toBeCloseTo(opt, 6);
     expect(comoSaleRendimiento(r)).toEqual([
       `Cómo sale el ${pct}, con los precios por kilo ya descontadas la mano de obra y las bolsas:`,
+      "• Elegida: Cubitos $\u00a05.263,00 por bolsa ÷ 10 kg = $\u00a0526,30 el kilo.",
+      "• Común: Moñitos $\u00a02.508,00 por bolsa ÷ 10 kg = $\u00a0250,80 el kilo.",
       `• Este taco: 12,4 kg de Elegida × ${plata(String(vE), 0)} + 4,9 kg de Común × ${plata(String(vC), 0)} = ${plata(String(este), 0)}`,
       `• Taco óptimo: 20,0 kg de Elegida × ${plata(String(vE), 0)} + 5,0 kg de Común × ${plata(String(vC), 0)} = ${plata(String(opt), 0)}`,
       `• ${plata(String(este), 0)} ÷ ${plata(String(opt), 0)} = ${pct}`,
@@ -618,6 +620,18 @@ describe("Lavadero: cómo sale el % de rendimiento (27/11/2026)", () => {
   });
   it("lo que sobra de una calidad cuenta solo hasta lo esperado", () => {
     const r = partida("124", "90");
-    expect(comoSaleRendimiento(r)[1]).toContain("5,0 kg de Común (dio 9,0; cuenta hasta 5,0)");
+    expect(comoSaleRendimiento(r)[3]).toContain("5,0 kg de Común (dio 9,0; cuenta hasta 5,0)");
+  });
+  it("con más de un producto de la calidad: cada cuenta y el promedio según los kilos", () => {
+    const r = calcularPartida(
+      limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: "80",
+        bolsas: { CUBITOS: "100", VEINTEX1: "10", EXTRA: "", MONOS: "", MONITOS: "40", INDUSTRIAL: "" } }),
+      CONFIG_INICIAL,
+    );
+    // Cubitos 5.263 ÷ 10 = 526,30; 20×1 (21.000 − 824 − 1.150) = 19.026 ÷ 20 = 951,30.
+    // Promedio: (1.000 kg × 526,30 + 200 kg × 951,30) ÷ 1.200 kg = 597,13.
+    expect(comoSaleRendimiento(r)[1]).toBe(
+      "• Elegida: Cubitos $\u00a05.263,00 por bolsa ÷ 10 kg = $\u00a0526,30 el kilo; 20×1 $\u00a019.026,00 por bolsa ÷ 20 kg = $\u00a0951,30 el kilo. Promedio según los kilos de cada uno (1.000 kg y 200 kg): $\u00a0597 el kilo.",
+    );
   });
 });
