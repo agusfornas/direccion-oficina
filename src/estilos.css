@@ -1703,9 +1703,15 @@ p.muted,
   cursor: pointer;
 }
 .rinde-detalle {
-  display: block;
   margin-top: 6px;
   color: var(--ink-2);
   font-size: 13px;
   font-weight: 500;
+}
+.rinde-detalle p {
+  margin: 6px 0;
+}
+.rinde-detalle ul {
+  margin: 0 0 6px;
+  padding-left: 20px;
 }

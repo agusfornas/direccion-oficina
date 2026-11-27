@@ -61,6 +61,35 @@ export function explicarLimite(r: ResultadoPartida, productor?: string): string[
   return t;
 }
 
+/**
+ * Cómo sale el % de rendimiento (27/11/2026): lo que dio, contando cada calidad hasta lo
+ * esperado y valuado después de mano de obra y bolsas, dividido por lo que valdría un taco
+ * óptimo. Vacío si faltan datos.
+ */
+export function comoSaleRendimiento(r: ResultadoPartida): string[] {
+  const rec = r.recomendado;
+  const tacos = Number(r.tacos);
+  const rinde = nul(rec.factorRendimiento);
+  const real = nul(rec.valorNetoReal);
+  const optimo = nul(rec.valorNetoOptimo);
+  if (!(tacos > 0) || rinde === null || real === null || optimo === null || !r.optimo.kgElegidaPorTaco || !r.optimo.kgComunPorTaco)
+    return [];
+  const kg = (v: number) => numeroFijo(String(v), 1);
+  const espE = Number(r.optimo.kgElegidaPorTaco);
+  const espC = Number(r.optimo.kgComunPorTaco);
+  const cuentaE = Math.min(Number(r.kgElegida) / tacos, espE);
+  const cuentaC = Math.min(Number(r.kgComun) / tacos, espC);
+  const realTaco = plata(String(real / tacos), 0);
+  const optimoTaco = plata(String(optimo / tacos), 0);
+  return [
+    `Cómo sale el ${pctRedondo(rinde)}:`,
+    `• Cada calidad cuenta hasta lo esperado: Elegida ${kg(cuentaE)} de ${kg(espE)} kg y Común ${kg(cuentaC)} de ${kg(espC)} kg.`,
+    `• Lo que dio vale ${realTaco} por taco, ya descontadas la mano de obra y las bolsas.`,
+    `• Un taco óptimo valdría ${optimoTaco}.`,
+    `• ${realTaco} ÷ ${optimoTaco} = ${pctRedondo(rinde)}.`,
+  ];
+}
+
 /** Explicación del Precio Recomendado. */
 export function explicarRecomendado(r: ResultadoPartida): string[] {
   const rec = r.recomendado;
@@ -88,6 +117,7 @@ export function explicarRecomendado(r: ResultadoPartida): string[] {
     else if (elegidaDeMas > 0.5)
       t.push(`La Elegida de más (${numeroFijo(String(elegidaDeMas / tacos), 1)} kg por taco) no compensa la Común que falta.`);
   }
+  t.push(...comoSaleRendimiento(r));
   if (sinPrecioPedido(r) && limite !== null) {
     if (rinde !== null) t.push(`Rindió el ${pctRedondo(rinde)} del óptimo.`);
     if (rec.precio !== null) {

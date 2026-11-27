@@ -184,7 +184,7 @@ describe("Lavadero: casos fijos", () => {
 // Los textos explicativos y los formatos de números también tienen que salir iguales.
 // @ts-expect-error: archivo JS copiado de la v1, sin tipos
 import { In, Rn, Vn, on, sn, cn, ln, un } from "../pruebas/original/lavadero-v1.js";
-import { explicarLimite, explicarRecomendado, resumenPartida } from "./explicaciones";
+import { comoSaleRendimiento, explicarLimite, explicarRecomendado, resumenPartida, sinPrecioPedido } from "./explicaciones";
 import { conSigno, numero, numeroFijo, plata, porcentaje } from "../comun/numeros";
 
 // Datos realistas y válidos: precios cerca de los reales, rendimientos variados.
@@ -267,13 +267,22 @@ function recomendadoComoAhora(v1: string[], r: ResultadoPartida): string[] {
   const comun = Number(r.recomendado.comunExcedenteKg ?? 0);
   const elegida = Number(r.recomendado.elegidaExcedenteKg ?? 0);
   const t = [...v1];
+  // 27/11/2026: después de "Taco de…" y del "no compensa" va "Cómo sale el N %".
+  const insertarComoSale = (lineas: string[]) => {
+    const extra = comoSaleRendimiento(r);
+    if (!extra.length) return lineas;
+    let k = 0;
+    while (k < lineas.length && (lineas[k].startsWith("Taco de ") || lineas[k].includes(" de más"))) k++;
+    return [...lineas.slice(0, k), ...extra, ...lineas.slice(k)];
+  };
   const i = t.findIndex((x) => x.startsWith("La Común de más ("));
   if (comun > 0.5 && elegida > 0.5) t[i] = "La Elegida y la Común de más no suman: cada una cuenta solo hasta su óptimo.";
   else if (elegida > 0.5 && tacos > 0 && comun <= 0.5) {
     const donde = t[0]?.startsWith("Taco de ") ? 1 : 0;
     t.splice(donde, 0, `La Elegida de más (${numeroFijo(String(elegida / tacos), 1)} kg por taco) no compensa la Común que falta.`);
   }
-  return t;
+  // Si la v1 devolvió solo el motivo (sin datos), no se agrega nada.
+  return t.length === 1 && r.recomendado.precio === null && !sinPrecioPedido(r) ? t : insertarComoSale(t);
 }
 
 describe("Lavadero: explicaciones y formatos iguales a la v1", () => {
@@ -579,5 +588,27 @@ describe("Lavadero: explicación del límite, primera frase (26/11/2026)", () =>
     );
     // Antes: "Con tus ventas y tus costos, la zanahoria de Orlando deja $ X por kilo, con tu 10 % ya guardado."
     expect(In(r, "Orlando")[0]).toBe(`Con tus ventas y tus costos, la zanahoria de Orlando deja ${plata(r.precioLimite)} por kilo, con tu 10\u00a0% ya guardado.`);
+  });
+});
+
+describe("Lavadero: cómo sale el % de rendimiento (27/11/2026)", () => {
+  it("lo que dio ÷ lo que valdría un taco óptimo, por taco", () => {
+    const r = calcularPartida(
+      limpiarPartida({ ...partidaVacia(), productor: "X", tacos: "100", pesoPromedio: "32", precioSolicitado: "80",
+        bolsas: { CUBITOS: "124", VEINTEX1: "", EXTRA: "", MONOS: "", MONITOS: "49", INDUSTRIAL: "" } }),
+      CONFIG_INICIAL,
+    );
+    const real = plata(String(Number(r.recomendado.valorNetoReal) / 100), 0);
+    const opt = plata(String(Number(r.recomendado.valorNetoOptimo) / 100), 0);
+    const pct = `${Math.round(Number(r.recomendado.factorRendimiento) * 100)}\u00a0%`;
+    expect(comoSaleRendimiento(r)).toEqual([
+      `Cómo sale el ${pct}:`,
+      "• Cada calidad cuenta hasta lo esperado: Elegida 12,4 de 20,0 kg y Común 4,9 de 5,0 kg.",
+      `• Lo que dio vale ${real} por taco, ya descontadas la mano de obra y las bolsas.`,
+      `• Un taco óptimo valdría ${opt}.`,
+      `• ${real} ÷ ${opt} = ${pct}.`,
+    ]);
+    const t = explicarRecomendado(r);
+    expect(t.indexOf(`Cómo sale el ${pct}:`)).toBe(1);
   });
 });
