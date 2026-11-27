@@ -3,7 +3,7 @@
 import { Fragment, useState, type ReactNode } from "react";
 import { Kpi, useDesplegable } from "../../comun/ui";
 import { numero, numeroFijo, numeroOCero, plata, porcentaje, type Decimal } from "../../comun/numeros";
-import { explicarLimite, explicarRecomendado, resumenPartida, sinPrecioPedido } from "../explicaciones";
+import { comoSaleRendimiento, explicarLimite, explicarRecomendado, resumenPartida, sinPrecioPedido } from "../explicaciones";
 import type { ResultadoPartida } from "../tipos";
 
 /** Texto con **negritas**. */
@@ -279,7 +279,8 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
   const pctRinde = porcentaje(String(Number(rec.factorRendimiento) * 100), 0);
   const pideSobreTope = rec.base === "PEDIDO" && rec.limitadoPor === "LIMITE";
   // Cuando no hay tarjeta del Recomendado, su explicación del rendimiento va en "Ver más".
-  const detalleRinde = explicarRecomendado(r).filter((t) => t.startsWith("Taco de ") || t.includes(" de más"));
+  const comoSale = comoSaleRendimiento(r);
+  const detalleRinde = explicarRecomendado(r).filter((t) => t.startsWith("Taco de ") || t.includes(" de más") || comoSale.includes(t));
   const [verMas, setVerMas] = useState(false);
   const pideDeMas = !sinPedido && r.precioSolicitado !== null && r.precioLimite !== null && Number(r.precioSolicitado) > Number(r.precioLimite) + 0.005;
   const porKg = (v: string | null) => (
@@ -366,12 +367,11 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
               <button type="button" className="ver-mas" aria-expanded={verMas} onClick={() => setVerMas((v) => !v)}>
                 {verMas ? "Ver menos" : "Ver más"}
               </button>
-              {verMas &&
-                detalleRinde.map((t) => (
-                  <span key={t} className="rinde-detalle">
-                    {t}
-                  </span>
-                ))}
+              {verMas && (
+                <div className="rinde-detalle">
+                  <Textos textos={detalleRinde} />
+                </div>
+              )}
             </>
           )}
         </div>

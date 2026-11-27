@@ -42,6 +42,8 @@ Lista viva. Se tacha cuando está hecho y probado.
   esperado vs. lo que dio y "no compensa". En el detalle sigue "A negociar" (27/11/2026).
 - [x] "Tocá para ver la explicación" / "Tocá para cerrar" pasan a "Ver más" / "Ver menos", todos con el mismo
   aspecto (Lavadero y Transporte) (27/11/2026).
+- [x] "Ver más" del Recomendado (y de la franja del rendimiento): "Cómo sale el N %" — lo que dio ÷ lo que valdría
+  un taco óptimo, por taco, después de mano de obra y bolsas (27/11/2026).
 
 ## Fórmulas
 - [x] Rendimiento: ninguna calidad compensa a la otra. Elegida y Común cuentan solo hasta su óptimo

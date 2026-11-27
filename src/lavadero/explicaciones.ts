@@ -61,6 +61,55 @@ export function explicarLimite(r: ResultadoPartida, productor?: string): string[
   return t;
 }
 
+/**
+ * Cómo sale el % de rendimiento (27/11/2026): kilos de cada calidad (hasta lo esperado) × su
+ * valor por kilo ya sin mano de obra ni bolsas, para este taco y para el taco óptimo; este ÷
+ * óptimo = %. El valor por kilo sale de los productos que dio la partida (precio de venta −
+ * mano de obra − bolsa, ÷ kg). Si no se puede mostrar así (por ejemplo, con la mezcla de
+ * valuación configurada), queda la versión en totales.
+ */
+export function comoSaleRendimiento(r: ResultadoPartida): string[] {
+  const rec = r.recomendado;
+  const tacos = Number(r.tacos);
+  const rinde = nul(rec.factorRendimiento);
+  const real = nul(rec.valorNetoReal);
+  const optimo = nul(rec.valorNetoOptimo);
+  if (!(tacos > 0) || rinde === null || real === null || optimo === null || !r.optimo.kgElegidaPorTaco || !r.optimo.kgComunPorTaco)
+    return [];
+  const kg = (v: number) => numeroFijo(String(v), 1);
+  const $0 = (v: number) => plata(String(v), 0);
+  const espE = Number(r.optimo.kgElegidaPorTaco);
+  const espC = Number(r.optimo.kgComunPorTaco);
+  const dioE = Number(r.kgElegida) / tacos;
+  const dioC = Number(r.kgComun) / tacos;
+  const titulo = `Cómo sale el ${pctRedondo(rinde)}, con los precios por kilo ya descontadas la mano de obra y las bolsas:`;
+  const division = `• ${$0(real / tacos)} ÷ ${$0(optimo / tacos)} = ${pctRedondo(rinde)}`;
+  // Valor por kilo de cada calidad según lo que dio la partida.
+  const porKg = (cat: "ELEGIDA" | "COMUN") => {
+    const ps = r.productos.filter((p) => p.categoria === cat && Number(p.bolsas) > 0 && p.netoPorBolsa !== null);
+    const k = ps.reduce((t, p) => t + Number(p.kg), 0);
+    return k > 0 ? ps.reduce((t, p) => t + Number(p.bolsas) * Number(p.netoPorBolsa), 0) / k : null;
+  };
+  const vE = porKg("ELEGIDA");
+  const vC = porKg("COMUN");
+  if (vE !== null && vC !== null && Math.abs(espE * vE + espC * vC - optimo / tacos) <= 0.5) {
+    const cuenta = (dio: number, esp: number, nombre: string) =>
+      dio > esp ? `${kg(esp)} kg de ${nombre} (dio ${kg(dio)}; cuenta hasta ${kg(esp)})` : `${kg(dio)} kg de ${nombre}`;
+    return [
+      titulo,
+      `• Este taco: ${cuenta(dioE, espE, "Elegida")} × ${$0(vE)} + ${cuenta(dioC, espC, "Común")} × ${$0(vC)} = ${$0(real / tacos)}`,
+      `• Taco óptimo: ${kg(espE)} kg de Elegida × ${$0(vE)} + ${kg(espC)} kg de Común × ${$0(vC)} = ${$0(optimo / tacos)}`,
+      division,
+    ];
+  }
+  return [
+    titulo,
+    `• Cada calidad cuenta hasta lo esperado: Elegida ${kg(Math.min(dioE, espE))} de ${kg(espE)} kg y Común ${kg(Math.min(dioC, espC))} de ${kg(espC)} kg.`,
+    `• Este taco vale ${$0(real / tacos)}; un taco óptimo valdría ${$0(optimo / tacos)}.`,
+    division,
+  ];
+}
+
 /** Explicación del Precio Recomendado. */
 export function explicarRecomendado(r: ResultadoPartida): string[] {
   const rec = r.recomendado;
@@ -88,6 +137,7 @@ export function explicarRecomendado(r: ResultadoPartida): string[] {
     else if (elegidaDeMas > 0.5)
       t.push(`La Elegida de más (${numeroFijo(String(elegidaDeMas / tacos), 1)} kg por taco) no compensa la Común que falta.`);
   }
+  t.push(...comoSaleRendimiento(r));
   if (sinPrecioPedido(r) && limite !== null) {
     if (rinde !== null) t.push(`Rindió el ${pctRedondo(rinde)} del óptimo.`);
     if (rec.precio !== null) {
