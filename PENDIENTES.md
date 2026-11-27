@@ -40,6 +40,8 @@ Lista viva. Se tacha cuando está hecho y probado.
 - [x] Cuando lo que pide × rendimiento pasa el tope, no hay tarjeta de Recomendado: el Límite dice "No te alcanza
   para los $ X que pide", el aviso amarillo explica la cuenta y la franja del rendimiento tiene "Ver más" con lo
   esperado vs. lo que dio y "no compensa". En el detalle sigue "A negociar" (27/11/2026).
+- [x] "Tocá para ver la explicación" / "Tocá para cerrar" pasan a "Ver más" / "Ver menos", todos con el mismo
+  aspecto (Lavadero y Transporte) (27/11/2026).
 
 ## Fórmulas
 - [x] Rendimiento: ninguna calidad compensa a la otra. Elegida y Común cuentan solo hasta su óptimo

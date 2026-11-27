@@ -1688,12 +1688,15 @@ p.muted,
 }
 
 /* "Ver más" dentro de la franja del rendimiento */
+/* Mismo aspecto que el "Ver más" de las tarjetas de precios: color del texto, subrayado. */
 .ver-mas {
   border: 0;
   background: none;
   padding: 0;
-  color: var(--blue);
+  color: inherit;
+  opacity: 0.75;
   font: inherit;
+  font-size: 13px;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;

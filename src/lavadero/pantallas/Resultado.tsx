@@ -119,10 +119,10 @@ function Explicacion({ abierta, textos, extra }: { abierta: boolean; textos: str
     <div className="exp">
       <Textos textos={textos} />
       {extra}
-      <span className="exp-hint">Tocá para cerrar</span>
+      <span className="exp-hint">Ver menos</span>
     </div>
   ) : (
-    <span className="exp-hint">Tocá para ver la explicación</span>
+    <span className="exp-hint">Ver más</span>
   );
 }
 

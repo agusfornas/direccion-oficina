@@ -72,7 +72,7 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.waitForTimeout(200);
   ok(!(await texto()).includes('parece mucho'), 'el aviso se va con un peso normal');
   await page.screenshot({ path: OUT + '/02-nueva-partida.png', fullPage: true });
-  await page.click('text=Tocá para ver la explicación >> nth=0');
+  await page.click('.precio-card .exp-hint >> nth=0');
   ok((await texto()).includes('Pagando hasta'), 'explicación del límite se abre');
   ok((await texto()).includes('= Queda para la zanahoria') && (await texto()).includes('Total vendido'), 'explicación del límite muestra la cuenta en números');
   await page.screenshot({ path: OUT + '/02b-cuenta-limite.png', fullPage: true });
