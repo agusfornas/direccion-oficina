@@ -86,9 +86,14 @@ const api = (ruta, metodo = 'GET', cuerpo) => page.request.fetch(URL + 'api/' + 
   await page.waitForSelector('text=podés pagar hasta');
   ok(/Pide \$ 100\.000,00\. (Como rindió el \d+ % del óptimo, eso baja a \$ [\d.,]+ \(\$ 100\.000,00 × \d+ %\)\. Pero |Rindió el óptimo, pero )por tus ventas y costos, guardando tu 10 %, podés pagar hasta \$ [\d.,]+ por kilo\./.test(await texto()),
     'aviso: pide, por rendimiento y hasta cuánto podés pagar');
-  ok((await page.textContent('.precio-card.blue')).replace(/\u00a0/g, ' ').includes('A negociar') &&
-     /Pide \$ 100\.000,00\. No pases de \$ [\d.,]+\./.test((await page.textContent('.precio-card.blue')).replace(/\u00a0/g, ' ')),
-    'pide más que el tope: el Recomendado dice "A negociar" (sin repetir el número)');
+  ok((await page.locator('.precio-card.blue').count()) === 0 && (await texto()).includes('No te alcanza para los $ 100.000,00 que pide.'),
+    'pide más que el tope: sin tarjeta de Recomendado y el Límite avisa que no alcanza');
+  if (await page.locator('.ver-mas').count()) {
+    ok(!(await texto()).includes('lo esperado es'), 'explicación del rendimiento cerrada al principio');
+    await page.click('.ver-mas');
+    ok((await texto()).includes('lo esperado es'), '"Ver más" muestra la explicación del rendimiento');
+    await page.click('.ver-mas');
+  }
   await page.getByLabel('Precio solicitado o de referencia por kg').fill('300');
   await page.waitForTimeout(200);
   // "No aplica": si lo que pide pasa el tope, avisa que no alcanza; si no, no.

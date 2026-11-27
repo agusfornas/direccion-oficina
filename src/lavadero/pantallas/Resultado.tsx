@@ -1,6 +1,6 @@
 // Panel de resultado de una partida: precios, rendimiento, planilla, resumen y gastos.
 // Se usa en "Nueva partida" (en vivo mientras se carga) y en el detalle del historial.
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { Kpi, useDesplegable } from "../../comun/ui";
 import { numero, numeroFijo, numeroOCero, plata, porcentaje, type Decimal } from "../../comun/numeros";
 import { explicarLimite, explicarRecomendado, resumenPartida, sinPrecioPedido } from "../explicaciones";
@@ -278,6 +278,9 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
   // El productor pide más de lo que podés pagar: se avisa debajo del "No aplica" (26/11/2026).
   const pctRinde = porcentaje(String(Number(rec.factorRendimiento) * 100), 0);
   const pideSobreTope = rec.base === "PEDIDO" && rec.limitadoPor === "LIMITE";
+  // Cuando no hay tarjeta del Recomendado, su explicación del rendimiento va en "Ver más".
+  const detalleRinde = explicarRecomendado(r).filter((t) => t.startsWith("Taco de ") || t.includes(" de más"));
+  const [verMas, setVerMas] = useState(false);
   const pideDeMas = !sinPedido && r.precioSolicitado !== null && r.precioLimite !== null && Number(r.precioSolicitado) > Number(r.precioLimite) + 0.005;
   const porKg = (v: string | null) => (
     <div className="v">
@@ -287,7 +290,7 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
 
   return (
     <div>
-      <div className={`precios ${sinPedido ? "solo" : ""}`}>
+      <div className={`precios ${sinPedido || pideSobreTope ? "solo" : ""}`}>
         <div className="precio-card clic" {...propsLimite}>
           <div className="t">Precio Límite de Compra</div>
           {sinPedido ? (
@@ -306,14 +309,15 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
             <>
               {porKg(r.precioLimite)}
               <div className="d">
-                Tope por kilo para cubrir costos{tuPct ? ` y ganar tu ${tuPct} %` : ""}.
+                Tope por kilo para cubrir costos{tuPct ? ` y ganar tu ${tuPct} %` : ""}.{pideSobreTope ? ` No te alcanza para los ${plata(r.precioSolicitado)} que pide.` : ""}
               </div>
             </>
           )}
           <Explicacion abierta={limiteAbierto} textos={explicarLimite(r, productor)} extra={<CuentaLimite r={r} />} />
         </div>
-        {/* Sin precio pedido no hay recomendado: se negocia por debajo del Límite (26/11/2026). */}
-        {!sinPedido && (
+        {/* Sin la tarjeta del Recomendado: sin precio pedido, o cuando lo que pide pasa el tope
+            (26/11/2026; el aviso amarillo explica la cuenta y "Ver más" el rendimiento). */}
+        {!sinPedido && !pideSobreTope && (
           <div className="precio-card blue clic" {...propsRec}>
             <div className="t">Precio Recomendado</div>
             {/* Lo que pide pasa el tope: el número queda solo en el Límite (26/11/2026). */}
@@ -356,6 +360,20 @@ export function Resultado({ r, productor }: { r: ResultadoPartida; productor?: s
       {rec.factorRendimiento !== null && hayProduccion && (
         <div className={`rinde mt ${Number(rec.factorRendimiento) >= 1 ? "bien" : Number(rec.factorRendimiento) >= 0.9 ? "medio" : "bajo"}`}>
           Rindió <b>el {porcentaje(String(Number(rec.factorRendimiento) * 100), 0)} del óptimo</b>.
+          {pideSobreTope && detalleRinde.length > 0 && (
+            <>
+              {" "}
+              <button type="button" className="ver-mas" aria-expanded={verMas} onClick={() => setVerMas((v) => !v)}>
+                {verMas ? "Ver menos" : "Ver más"}
+              </button>
+              {verMas &&
+                detalleRinde.map((t) => (
+                  <span key={t} className="rinde-detalle">
+                    {t}
+                  </span>
+                ))}
+            </>
+          )}
         </div>
       )}
       {rec.base === "PEDIDO" && rec.limitadoPor === "LIMITE" && (
