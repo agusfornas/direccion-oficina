@@ -57,10 +57,10 @@ export function ResultadoViajeVista({ r, cfg }: { r: ResultadoViaje; cfg: Config
               {explicarGanancia(r, cfg).map((t, i) => (
                 <p key={i}>{t}</p>
               ))}
-              <span className="exp-hint">Tocá para cerrar</span>
+              <span className="exp-hint">Ver menos</span>
             </div>
           ) : (
-            <span className="exp-hint">Tocá para ver la explicación</span>
+            <span className="exp-hint">Ver más</span>
           ))}
       </div>
       <div className="card mt">
